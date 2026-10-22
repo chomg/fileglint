@@ -90,6 +90,10 @@ struct CommentPreservationTests {
             "{a:1, b: 2} # a:1 is a key, not a key/value pair\n",
             "{\"세계🌍\":1, 'other':2} # flow\n",
             "# head\n-    first # one\n-    second # two\n",
+            "empty: # comment\nnext: 1\n",
+            "empty:    # comment\nnext: 1\n",
+            "- # empty sequence entry\n- next\n",
+            "{empty: , next: 1} # implicit null\n",
             "block: |2- # explicit indent\n    # literal\n  less indented\nnext: [1,2] # next\n",
             "? [a,b]\n: [1,2] # complex key\n",
             "plain: first line\n  still  a  scalar # comment\n",
@@ -97,6 +101,7 @@ struct CommentPreservationTests {
         ] {
             let output = try #require(document(input, .yaml).pretty)
             #expect(try nodes(input) == nodes(output))
+            #expect(try document(output, .yaml).pretty == output)
             #expect(input.filter { !$0.isWhitespace } == output.filter { !$0.isWhitespace })
         }
         #expect(try document("{\"世界🌍\":1, 'other':2}", .yaml).pretty == "{\"世界🌍\": 1, 'other': 2}")

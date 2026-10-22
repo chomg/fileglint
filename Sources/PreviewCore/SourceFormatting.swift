@@ -17,6 +17,10 @@ enum SourceFormatting {
         var containers = Set<Position>()
         func visit(_ node: Node) {
             guard let mark = node.mark else { return }
+            // Implicit nulls have no source token. Their mark can point into the
+            // gap before a comment; treating it as a boundary adds space on
+            // every formatting pass. Explicit empty quoted strings have tokens.
+            if case .scalar(let scalar) = node, scalar.style == .plain && scalar.string.isEmpty { return }
             let position = Position(line: mark.line, column: mark.column)
             positions.insert(position)
             switch node {
