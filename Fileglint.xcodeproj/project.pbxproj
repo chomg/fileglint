@@ -288,10 +288,12 @@
 "40ED3D430FA88C4E2921A83C",
 "4D39E0D75CCD9B98CA14F858",
 "7D015E5A0F22AEFFF1B6238D",
+"F4B646D284333800A796FC4B",
 );
 "buildRules" = (
 );
 "dependencies" = (
+"2185F97687B372895BA5C12F",
 );
 "packageProductDependencies" = (
 "9CA6CFD8214812311BF499CB",
@@ -416,6 +418,140 @@
 "packageProductDependencies" = (
 );
 };
+"D7D53EACDDF954D382449A26" = {
+"isa" = "PBXFileReference";
+"lastKnownFileType" = "sourcecode.swift";
+"path" = "Sources/PreviewLauncher/main.swift";
+"sourceTree" = "<group>";
+};
+"B2086E8F10492EBF144B1EC6" = {
+"isa" = "PBXBuildFile";
+"fileRef" = "D7D53EACDDF954D382449A26";
+};
+"7EA9DEBA63D677251DC483A9" = {
+"isa" = "PBXFileReference";
+"explicitFileType" = "wrapper.xpc-service";
+"path" = "FileglintLauncher.xpc";
+"sourceTree" = "BUILT_PRODUCTS_DIR";
+};
+"89F89092D806F42432CA9551" = {
+"isa" = "PBXSourcesBuildPhase";
+"buildActionMask" = 2147483647;
+"files" = (
+"B2086E8F10492EBF144B1EC6",
+);
+"runOnlyForDeploymentPostprocessing" = 0;
+};
+"BF49737B86D7B3124D3674BE" = {
+"isa" = "XCSwiftPackageProductDependency";
+"package" = "AAA88E5F2E13CBF6727DD19B";
+"productName" = "PreviewOpening";
+};
+"E2FFB41D37B0B2A9A57B2A6E" = {
+"isa" = "PBXBuildFile";
+"productRef" = "BF49737B86D7B3124D3674BE";
+};
+"E70A5A9E351AA4B620BE78FD" = {
+"isa" = "PBXFrameworksBuildPhase";
+"buildActionMask" = 2147483647;
+"files" = (
+"E2FFB41D37B0B2A9A57B2A6E",
+);
+"runOnlyForDeploymentPostprocessing" = 0;
+};
+"46BE73BF5EE718BA7EC362CD" = {
+"isa" = "PBXResourcesBuildPhase";
+"buildActionMask" = 2147483647;
+"files" = (
+);
+"runOnlyForDeploymentPostprocessing" = 0;
+};
+"594392195A6FC572E188DF3C" = {
+"isa" = "XCBuildConfiguration";
+"name" = "Debug";
+"buildSettings" = {
+"MACOSX_DEPLOYMENT_TARGET" = "14.0";
+"SDKROOT" = "macosx";
+"SWIFT_VERSION" = "5.0";
+"CODE_SIGN_STYLE" = "Automatic";
+"CODE_SIGN_IDENTITY" = "-";
+"DEVELOPMENT_TEAM" = "";
+"ENABLE_HARDENED_RUNTIME" = "YES";
+"CLANG_ENABLE_MODULES" = "YES";
+"LD_RUNPATH_SEARCH_PATHS" = (
+"$(inherited)",
+"@executable_path/../Frameworks",
+);
+"SUPPORTED_PLATFORMS" = "macosx";
+"PRODUCT_NAME" = "FileglintLauncher";
+"PRODUCT_BUNDLE_IDENTIFIER" = "dev.fileglint.Fileglint.Launcher";
+"GENERATE_INFOPLIST_FILE" = "NO";
+"INFOPLIST_FILE" = "Configuration/Launcher-Info.plist";
+"CODE_SIGN_ENTITLEMENTS" = "Configuration/Launcher.entitlements";
+"SKIP_INSTALL" = "YES";
+"APPLICATION_EXTENSION_API_ONLY" = "YES";
+"SWIFT_OPTIMIZATION_LEVEL" = "-Onone";
+"ONLY_ACTIVE_ARCH" = "YES";
+"SWIFT_ACTIVE_COMPILATION_CONDITIONS" = "DEBUG";
+};
+};
+"170DFC73EF71779F59F53A03" = {
+"isa" = "XCBuildConfiguration";
+"name" = "Release";
+"buildSettings" = {
+"MACOSX_DEPLOYMENT_TARGET" = "14.0";
+"SDKROOT" = "macosx";
+"SWIFT_VERSION" = "5.0";
+"CODE_SIGN_STYLE" = "Automatic";
+"CODE_SIGN_IDENTITY" = "-";
+"DEVELOPMENT_TEAM" = "";
+"ENABLE_HARDENED_RUNTIME" = "YES";
+"CLANG_ENABLE_MODULES" = "YES";
+"LD_RUNPATH_SEARCH_PATHS" = (
+"$(inherited)",
+"@executable_path/../Frameworks",
+);
+"SUPPORTED_PLATFORMS" = "macosx";
+"PRODUCT_NAME" = "FileglintLauncher";
+"PRODUCT_BUNDLE_IDENTIFIER" = "dev.fileglint.Fileglint.Launcher";
+"GENERATE_INFOPLIST_FILE" = "NO";
+"INFOPLIST_FILE" = "Configuration/Launcher-Info.plist";
+"CODE_SIGN_ENTITLEMENTS" = "Configuration/Launcher.entitlements";
+"SKIP_INSTALL" = "YES";
+"APPLICATION_EXTENSION_API_ONLY" = "YES";
+"SWIFT_OPTIMIZATION_LEVEL" = "-O";
+"ONLY_ACTIVE_ARCH" = "NO";
+};
+};
+"9F460BFD3CC8CEA9A90178BF" = {
+"isa" = "XCConfigurationList";
+"buildConfigurations" = (
+"594392195A6FC572E188DF3C",
+"170DFC73EF71779F59F53A03",
+);
+"defaultConfigurationIsVisible" = 0;
+"defaultConfigurationName" = "Debug";
+};
+"35DD8D7EFC6496F7E82D59C0" = {
+"isa" = "PBXNativeTarget";
+"name" = "FileglintLauncher";
+"productName" = "FileglintLauncher";
+"productReference" = "7EA9DEBA63D677251DC483A9";
+"productType" = "com.apple.product-type.xpc-service";
+"buildConfigurationList" = "9F460BFD3CC8CEA9A90178BF";
+"buildPhases" = (
+"89F89092D806F42432CA9551",
+"E70A5A9E351AA4B620BE78FD",
+"46BE73BF5EE718BA7EC362CD",
+);
+"buildRules" = (
+);
+"dependencies" = (
+);
+"packageProductDependencies" = (
+"BF49737B86D7B3124D3674BE",
+);
+};
 "6F47968B049B63849C2811BC" = {
 "isa" = "PBXContainerItemProxy";
 "containerPortal" = "244210E48437B6556980A702";
@@ -452,12 +588,46 @@
 "isa" = "PBXTargetDependency";
 "target" = "B9A7DA34981250D02CB5B0E8";
 };
+"CC3E079F02D2EAA60E6422D3" = {
+"isa" = "PBXContainerItemProxy";
+"containerPortal" = "244210E48437B6556980A702";
+"proxyType" = 1;
+"remoteGlobalIDString" = "35DD8D7EFC6496F7E82D59C0";
+"remoteInfo" = "FileglintLauncher";
+};
+"2185F97687B372895BA5C12F" = {
+"isa" = "PBXTargetDependency";
+"target" = "35DD8D7EFC6496F7E82D59C0";
+"targetProxy" = "CC3E079F02D2EAA60E6422D3";
+};
+"A0280516C5885C984EC5DD2E" = {
+"isa" = "PBXBuildFile";
+"fileRef" = "7EA9DEBA63D677251DC483A9";
+"settings" = {
+"ATTRIBUTES" = (
+"CodeSignOnCopy",
+"RemoveHeadersOnCopy",
+);
+};
+};
+"F4B646D284333800A796FC4B" = {
+"isa" = "PBXCopyFilesBuildPhase";
+"buildActionMask" = 2147483647;
+"dstPath" = "$(CONTENTS_FOLDER_PATH)/XPCServices";
+"dstSubfolderSpec" = 16;
+"files" = (
+"A0280516C5885C984EC5DD2E",
+);
+"name" = "Embed File Launcher";
+"runOnlyForDeploymentPostprocessing" = 0;
+};
 "0A3E27B8CA818264D75C8D81" = {
 "isa" = "PBXGroup";
 "children" = (
 "415B4E1E92ABFFD46241EC23",
 "9A1B016FAF8F9FEC4D58F038",
 "F5CB9D79AE2288DD7EDD170C",
+"7EA9DEBA63D677251DC483A9",
 );
 "name" = "Products";
 "sourceTree" = "<group>";
@@ -468,6 +638,7 @@
 "BB37C50EC3F9AD87B61730F4",
 "CCF91599CB93429D0B5D93A6",
 "6773EECB24A945972D84CFC0",
+"D7D53EACDDF954D382449A26",
 "0A3E27B8CA818264D75C8D81",
 );
 "sourceTree" = "<group>";
@@ -524,6 +695,7 @@
 "B9A7DA34981250D02CB5B0E8",
 "E0A10A3092CAF7E4DAD0B125",
 "1F8382FDFB0367001DC9F727",
+"35DD8D7EFC6496F7E82D59C0",
 );
 "packageReferences" = (
 "AAA88E5F2E13CBF6727DD19B",

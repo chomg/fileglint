@@ -88,6 +88,7 @@ def check():
     extension = plistlib.loads(Path('Configuration/Extension-Info.plist').read_bytes())
     imported = {v['UTTypeIdentifier'] for v in host['UTImportedTypeDeclarations']}
     assert set(extension['NSExtension']['NSExtensionAttributes']['QLSupportedContentTypes']) == imported | {'public.json'}
+    assert plistlib.loads(Path('Configuration/Launcher.entitlements').read_bytes()) == {'com.apple.security.app-sandbox': True}
     assert 'CFBundleDocumentTypes' not in host  # Do not claim default handling.
     assert Path('Package.resolved').read_bytes() == Path('Fileglint.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved').read_bytes()
     print('Project, Swift syntax, plist and locked-dependency checks passed.', flush=True)
@@ -102,10 +103,11 @@ def build():
     xcode('build', '-destination', 'generic/platform=macOS', 'ARCHS=arm64 x86_64', 'ONLY_ACTIVE_ARCH=NO', 'CODE_SIGNING_ALLOWED=NO')
     app = ROOT / 'artifacts/DerivedData/Build/Products/Debug/Fileglint.app'
     extension = app / 'Contents/PlugIns/FileglintExtension.appex'
-    for binary in [app / 'Contents/MacOS/Fileglint', extension / 'Contents/MacOS/FileglintExtension']:
+    for binary in [app / 'Contents/MacOS/Fileglint', extension / 'Contents/MacOS/FileglintExtension',
+                   extension / 'Contents/XPCServices/FileglintLauncher.xpc/Contents/MacOS/FileglintLauncher']:
         for architecture in ('arm64', 'x86_64'):
             run('lipo', str(binary), '-verify_arch', architecture)
-    print('Universal app and embedded extension verified (unsigned).', flush=True)
+    print('Universal app, embedded extension and launcher verified (unsigned).', flush=True)
 
 
 def test_ui():

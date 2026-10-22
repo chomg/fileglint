@@ -6,6 +6,7 @@ let package = Package(
     platforms: [.macOS(.v14)],
     products: [
         .library(name: "PreviewCore", targets: ["PreviewCore"]),
+        .library(name: "PreviewOpening", targets: ["PreviewOpening"]),
         .library(name: "PreviewUI", targets: ["PreviewUI"]),
         .executable(name: "PreviewHost", targets: ["PreviewHost"]),
     ],
@@ -15,11 +16,13 @@ let package = Package(
     ],
     targets: [
         .target(name: "PreviewCore", dependencies: ["Yams", "TOMLKit"]),
-        .target(name: "PreviewUI", dependencies: ["PreviewCore"]),
+        .target(name: "PreviewOpening"),
+        .target(name: "PreviewUI", dependencies: ["PreviewCore", "PreviewOpening"]),
         .executableTarget(name: "PreviewHost", dependencies: ["PreviewUI", "PreviewCore"]),
         .target(name: "PreviewExtension", dependencies: ["PreviewCore", "PreviewUI"]),
+        .testTarget(name: "PreviewOpeningTests", dependencies: ["PreviewOpening"]),
         .testTarget(name: "PreviewCoreTests", dependencies: ["PreviewCore", "Yams", "TOMLKit"]),
-        .testTarget(name: "PreviewUITests", dependencies: ["PreviewUI", "PreviewCore"]),
+        .testTarget(name: "PreviewUITests", dependencies: ["PreviewUI", "PreviewCore", "PreviewOpening"]),
     ],
     swiftLanguageModes: [.v5]
 )

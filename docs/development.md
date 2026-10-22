@@ -35,6 +35,22 @@ The implementation and current host/check limitations are recorded in the
 [issue #1 handoff](tasks/0002-comment-preservation.md); earlier bootstrap
 Xcode/Finder evidence does not verify this candidate.
 
+## Application selection development
+
+The content-header split control opens the current original file in its default
+app; the separate arrow queries compatible installed apps for a one-time choice.
+It is omitted in synthetic host samples. FileglintLauncher.xpc is nested inside
+the preview extension; build it through the shared Fileglint scheme. Signed
+bundles are required for XPC peer authentication. The unsigned universal build
+verifies all three binaries but is not a runnable Finder opening acceptance test.
+See [RFC 0003](rfcs/0003-open-with-applications.md) and [issue #3](https://github.com/chomg/fileglint/issues/3).
+
+For Finder acceptance, compare the arrow menu with Finder Open With for JSON,
+YAML/.yml and TOML; open the default and a different app and verify the original
+document URL in each target. Check arrow-only activation launches nothing,
+keyboard/Escape, both appearances, invalid Raw, navigation, and unchanged file
+hashes/default associations. Failures and unavailable apps/files must be visible.
+
 ## Command mappings
 
 The product was renamed to Fileglint on 2026-10-22; see [ADR 0002](decisions/0002-product-name.md). The workspace directory was renamed from `macos-previewer` to `/path/to/fileglint` on 2026-10-22 at the user's request. Open the new path in Codex/Xcode; older chat/file links and historical logs can still refer to the original path. Swift/Xcode caches may retain absolute paths; if a moved checkout fails with stale-path errors, preserve logs, then move the generated `.build` and `artifacts/*DerivedData` directories aside and rerun setup/build. Keep historical evidence. The filesystem rename does not rename a remote repository.
@@ -53,7 +69,7 @@ All mappings invoke `python3 scripts/project.py <name>` from the project root; s
 | check | generator drift, plutil, Swift syntax, Python compile, lock/type-declaration agreement | macOS CLT; no source mutations |
 | test | swift test --disable-xctest --enable-swift-testing | Parser + native AppKit component tests; no XCTest suite is hidden here (host XCTest UI tests are separately mapped) |
 | build-shared | swift build | Shared modules, host executable and extension adapter compilation; does not package a preview extension |
-| build | xcodebuild build, generic macOS, both architectures; lipo assertions on host and embedded appex | Full Xcode; unsigned verification artifacts |
+| build | xcodebuild build, generic macOS, both architectures; lipo assertions on host, embedded appex and nested XPC launcher | Full Xcode; unsigned verification artifacts |
 | test-ui | xcodebuild test, native platform=macOS, HostUITests | Full Xcode/XCTest, interactive desktop and UI automation authorization; artifacts/UITestDerivedData and unique xcresult |
 | build-development | xcodebuild build, native current Mac, ad hoc signed | artifacts/DevelopmentDerivedData; declared sandbox entitlements, isolated from test injection |
 | dev-sample | swift build --product PreviewHost and diagnostic bundle assembly | CLT fallback at artifacts/FileglintSample.app; no embedded extension or Finder registration |

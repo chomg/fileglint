@@ -4,7 +4,7 @@ Preview more file formats in Finder.
 
 A native macOS Quick Look extension for JSON, YAML and TOML. Select a supported file in Finder and press Space to read syntax-colored text, then switch between Raw and Prettified without modifying the source. A small containing app explains setup and offers a sample preview.
 
-This extends Finder Quick Look, not Apple Preview.app. Quick Look's Open action and Finder's Open With handle opening the original file in editors. Custom app selection inside the extension is deferred.
+This extends Finder Quick Look, not Apple Preview.app. Beside Raw/Prettified, Open with the default application opens the original file; its separate arrow lists compatible installed applications for a one-time choice. Default associations are unchanged. Quick Look's native Open action and Finder's Open With remain available.
 
 ## Develop
 
@@ -35,7 +35,7 @@ uv run --script scripts/dev.py verify --scope local
 uv run --script scripts/dev.py verify --scope ci
 ```
 
-The local gate includes the native universal app/extension build and passes on the installed Xcode 27.1. It fails when full Xcode is unavailable. CI additionally runs host UI journeys natively on arm64 and Intel. [Finder acceptance](docs/development.md#finder-acceptance) is a separate required check. Actual results and remaining limitations are in [task 0001](docs/tasks/0001-bootstrap.md); the current Mac Finder flows pass, while automated UI authorization and the remaining platform/hosted checks are still pending.
+The local gate includes the native universal app/extension/launcher build and passes on the installed Xcode 27.1. It fails when full Xcode is unavailable. CI additionally runs host UI journeys natively on arm64 and Intel. [Finder acceptance](docs/development.md#finder-acceptance) is a separate required check. Actual results and remaining limitations are in [task 0001](docs/tasks/0001-bootstrap.md); the current Mac Finder flows pass, while automated UI authorization and the remaining platform/hosted checks are still pending.
 
 Files are UTF-8, up to 1 MiB. Prettification is capped at 128 KiB input, bounded complexity and 4 MiB output; larger supported text stays in Raw. YAML/TOML prettification preserves comments and source layout while normalizing spacing. Invalid content retains Raw with an error.
 

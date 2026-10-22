@@ -25,7 +25,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let title = NSTextField(labelWithString: "Fileglint")
         title.font = .boldSystemFont(ofSize: 24)
-        let instructions = NSTextField(wrappingLabelWithString: "Preview JSON, YAML and TOML in Finder.\n\n1. Keep this app installed.\n2. Enable Fileglint in System Settings → General → Login Items & Extensions → Quick Look if needed (location varies by macOS).\n3. Select a supported file in Finder and press Space.\n\nUse Raw to preserve the original text. Prettified changes only the display. Quick Look’s Open action and Finder’s Open With open the original file in an editor.")
+        let instructions = NSTextField(wrappingLabelWithString: "Preview JSON, YAML and TOML in Finder.\n\n1. Keep this app installed.\n2. Enable Fileglint in System Settings → General → Login Items & Extensions → Quick Look if needed (location varies by macOS).\n3. Select a supported file in Finder and press Space.\n\nUse Raw to preserve the original text. Prettified changes only the display. In Finder previews, use Open with beside Raw/Prettified to open the original file, or its arrow to choose another app. This sample has no file to open.")
         let sample = NSButton(title: "Try Sample", target: self, action: #selector(showSample))
         sample.setAccessibilityIdentifier("try-sample")
         sampleFormat.addItems(withTitles: ["JSON", "YAML", "TOML"])

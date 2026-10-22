@@ -9,6 +9,8 @@ final class HostUITests: XCTestCase {
         app.buttons["try-sample"].click()
         let window = app.windows["Sample Preview"]
         XCTAssertTrue(window.waitForExistence(timeout: 5))
+        XCTAssertFalse(window.buttons["open-default-application"].isHittable)
+        XCTAssertFalse(window.buttons["choose-application"].isHittable)
         let content = window.textViews["preview-content"]
         XCTAssertTrue(content.waitForExistence(timeout: 5))
         XCTAssertTrue((content.value as? String)?.contains("Fileglint") == true)
@@ -36,6 +38,7 @@ final class HostUITests: XCTestCase {
             let window = app.windows["Sample Preview"]
             let content = window.textViews["preview-content"]
             XCTAssertTrue(content.waitForExistence(timeout: 5))
+            XCTAssertFalse(window.buttons["choose-application"].isHittable)
             let raw = try XCTUnwrap(content.value as? String)
             window.radioButtons["Prettified"].click()
             let formatted = try XCTUnwrap(content.value as? String)

@@ -8,7 +8,7 @@ Mac developers and people inspecting configuration files need to read JSON, YAML
 
 ## First usable outcome
 
-Install a small containing app, enable its Quick Look extension if macOS requests it, select a `.json`, `.yaml`, `.yml` or `.toml` file in Finder, and press Space. Read selectable, syntax-colored text and switch between Raw and Prettified. Use Quick Look's native Open action for the default application; use Finder's Open With menu for other installed applications.
+Install a small containing app, enable its Quick Look extension if macOS requests it, select a `.json`, `.yaml`, `.yml` or `.toml` file in Finder, and press Space. Read selectable, syntax-colored text and switch between Raw and Prettified. Use the split control to the right of Raw/Prettified to open the original file in its default application or choose another compatible installed application. Quick Look's native Open action and Finder's Open With remain available.
 
 The host app provides setup instructions and a sample preview to diagnose rendering independently of Finder registration. It is not a document editor. The user agreed to the Quick Look + minimal host app approach on 2026-10-21.
 
@@ -22,7 +22,7 @@ The host app provides setup instructions and a sample preview to diagnose render
 
 ## Exclusions and next increments
 
-No integration inside Apple Preview.app, editing/saving, thumbnails, schema validation, tree navigation, remote downloads, multi-gigabyte files, telemetry, or production distribution in bootstrap. A custom in-extension application picker is deferred until sandbox behavior is proven; the OS Open action and Finder Open With provide the initial workflow. Search and line numbers are useful follow-ups after native preview integration is verified.
+No integration inside Apple Preview.app, editing/saving, thumbnails, schema validation, tree navigation, remote downloads, multi-gigabyte files, telemetry, or production distribution in bootstrap. Application selection is a separate control inside the preview content, as approved in [issue #3](https://github.com/chomg/fileglint/issues/3). It uses a sandboxed on-demand XPC launcher; see [RFC 0003](rfcs/0003-open-with-applications.md). Arbitrary application browsing, association editing and persistent app overrides are excluded. Search and line numbers are useful follow-ups after native preview integration is verified.
 
 ## Targets and constraints
 
