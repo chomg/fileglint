@@ -37,7 +37,7 @@ uv run --script scripts/dev.py verify --scope ci
 
 The local gate includes the native universal app/extension build and passes on the installed Xcode 27.1. It fails when full Xcode is unavailable. CI additionally runs host UI journeys natively on arm64 and Intel. [Finder acceptance](docs/development.md#finder-acceptance) is a separate required check. Actual results and remaining limitations are in [task 0001](docs/tasks/0001-bootstrap.md); the current Mac Finder flows pass, while automated UI authorization and the remaining platform/hosted checks are still pending.
 
-Files are UTF-8, up to 1 MiB. Prettification is capped at 128 KiB input, bounded complexity and 4 MiB output; larger supported text stays in Raw. Formatting may normalize comments/layout for YAML and TOML. Invalid content retains Raw with an error.
+Files are UTF-8, up to 1 MiB. Prettification is capped at 128 KiB input, bounded complexity and 4 MiB output; larger supported text stays in Raw. YAML/TOML prettification preserves comments and source layout while normalizing spacing. Invalid content retains Raw with an error.
 
 ## Project knowledge
 

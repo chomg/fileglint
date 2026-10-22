@@ -63,7 +63,7 @@ for name, source, product_type, suffix, plist in [
     package_products = []
     linked = []
     if suffix != 'xctest':
-        for library in (['PreviewUI', 'PreviewCore'] if suffix == 'appex' else ['PreviewUI']):
+        for library in ['PreviewUI', 'PreviewCore']:
             dependency = add(name + library, 'XCSwiftPackageProductDependency', package=package, productName=library)
             package_products.append(dependency)
             linked.append(add(name + library + 'link', 'PBXBuildFile', productRef=dependency))

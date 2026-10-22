@@ -16,7 +16,7 @@ let package = Package(
     targets: [
         .target(name: "PreviewCore", dependencies: ["Yams", "TOMLKit"]),
         .target(name: "PreviewUI", dependencies: ["PreviewCore"]),
-        .executableTarget(name: "PreviewHost", dependencies: ["PreviewUI"]),
+        .executableTarget(name: "PreviewHost", dependencies: ["PreviewUI", "PreviewCore"]),
         .target(name: "PreviewExtension", dependencies: ["PreviewCore", "PreviewUI"]),
         .testTarget(name: "PreviewCoreTests", dependencies: ["PreviewCore", "Yams", "TOMLKit"]),
         .testTarget(name: "PreviewUITests", dependencies: ["PreviewUI", "PreviewCore"]),

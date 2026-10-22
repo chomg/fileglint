@@ -43,11 +43,21 @@
 "isa" = "PBXBuildFile";
 "productRef" = "8ED09F5C19B111446CA768EE";
 };
+"20368B398242D90B43C50ED5" = {
+"isa" = "XCSwiftPackageProductDependency";
+"package" = "AAA88E5F2E13CBF6727DD19B";
+"productName" = "PreviewCore";
+};
+"4A80E38CA63264E7FDB7F4C3" = {
+"isa" = "PBXBuildFile";
+"productRef" = "20368B398242D90B43C50ED5";
+};
 "562B88471C42758836C7DFE6" = {
 "isa" = "PBXFrameworksBuildPhase";
 "buildActionMask" = 2147483647;
 "files" = (
 "732638DA0A712D3EDD62099F",
+"4A80E38CA63264E7FDB7F4C3",
 );
 "runOnlyForDeploymentPostprocessing" = 0;
 };
@@ -140,6 +150,7 @@
 );
 "packageProductDependencies" = (
 "8ED09F5C19B111446CA768EE",
+"20368B398242D90B43C50ED5",
 );
 };
 "CCF91599CB93429D0B5D93A6" = {

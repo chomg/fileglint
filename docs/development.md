@@ -25,6 +25,16 @@ cd /path/to/fileglint
 uv run --script scripts/dev.py verify --scope local
 ```
 
+## Comment-preservation development
+
+Try Sample now includes a format selector for JSON, YAML and TOML. Choose
+YAML/TOML to inspect standalone and inline comments through the shared
+Raw/Prettified view. The richer `Fixtures/comments.yaml` and
+`Fixtures/comments.toml` cover streams, tags/aliases and multiline values.
+The implementation and current host/check limitations are recorded in the
+[issue #1 handoff](tasks/0002-comment-preservation.md); earlier bootstrap
+Xcode/Finder evidence does not verify this candidate.
+
 ## Command mappings
 
 The product was renamed to Fileglint on 2026-10-22; see [ADR 0002](decisions/0002-product-name.md). The workspace directory was renamed from `macos-previewer` to `/path/to/fileglint` on 2026-10-22 at the user's request. Open the new path in Codex/Xcode; older chat/file links and historical logs can still refer to the original path. Swift/Xcode caches may retain absolute paths; if a moved checkout fails with stale-path errors, preserve logs, then move the generated `.build` and `artifacts/*DerivedData` directories aside and rerun setup/build. Keep historical evidence. The filesystem rename does not rename a remote repository.
