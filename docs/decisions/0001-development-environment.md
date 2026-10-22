@@ -1,6 +1,6 @@
 # Decision 0001 Development Environment
 
-Status: Accepted; implementation and platform acceptance pending in this history stage
+Status: Accepted; native bundle/current Finder verified, automated UI and hosted verification pending
 
 ## Context
 
@@ -12,7 +12,7 @@ Use native Swift/AppKit and QuickLookUI, minimum macOS 14, arm64 and x86_64, Deb
 
 Use Foundation JSON validation, Yams 6.2.2 for YAML nodes/streams and TOMLKit 0.6.0 for TOML parsing/serialization, exact requirements and Package.resolved. Do not implement YAML/TOML parsers. Use a native NSTextView, without WebKit or JavaScript. The preview extension has App Sandbox enabled and receives file access from Quick Look. The host requests no document association or network entitlement.
 
-Keep the direct workflow. uv launches the existing Python harness; a project Python adapter maps finite Swift/Xcode commands. Full Xcode 26.0.1 (Swift 6.2, SDK 26.0) is the CI toolchain; local work also supports Swift 6.4 CLT and the installed full Xcode 27.1. Local and hosted toolchains both require actual implementation-stage build and acceptance evidence. CI targets macOS 15 arm64 and x86_64 separately. Universal bundle build checks both architectures; XCUITest runs natively on each runner. Oldest supported macOS 14 Finder acceptance remains a required manual compatibility check before release.
+Keep the direct workflow. uv launches the existing Python harness; a project Python adapter maps finite Swift/Xcode commands. Full Xcode 26.0.1 (Swift 6.2, SDK 26.0) is the CI toolchain; local work also supports Swift 6.4 CLT and the installed full Xcode 27.1. The latter has real local universal-build and Finder evidence, while the separate CI pin remains unexecuted here. CI targets macOS 15 arm64 and x86_64 separately. Universal bundle build checks both architectures; XCUITest runs natively on each runner. Oldest supported macOS 14 Finder acceptance remains a required manual compatibility check before release.
 
 ## Alternatives and tradeoffs
 

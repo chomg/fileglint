@@ -1,24 +1,69 @@
 {
   "schema_version": 2,
   "commands": {
-    "doctor": null,
-    "setup": null,
-    "dev": null,
-    "check": null,
-    "test": null,
-    "test-ui": null,
-    "build": null
+    "doctor": [
+      "python3",
+      "scripts/project.py",
+      "doctor"
+    ],
+    "setup": [
+      "python3",
+      "scripts/project.py",
+      "setup"
+    ],
+    "dev": [
+      "python3",
+      "scripts/project.py",
+      "dev"
+    ],
+    "check": [
+      "python3",
+      "scripts/project.py",
+      "check"
+    ],
+    "test": [
+      "python3",
+      "scripts/project.py",
+      "test"
+    ],
+    "test-ui": [
+      "python3",
+      "scripts/project.py",
+      "test-ui"
+    ],
+    "build": [
+      "python3",
+      "scripts/project.py",
+      "build"
+    ],
+    "build-shared": [
+      "python3",
+      "scripts/project.py",
+      "build-shared"
+    ],
+    "dev-sample": [
+      "python3",
+      "scripts/project.py",
+      "dev-sample"
+    ],
+    "build-development": [
+      "python3",
+      "scripts/project.py",
+      "build-development"
+    ]
   },
   "verification": {
     "local": [
       "check",
       "test",
+      "build-shared",
       "build"
     ],
     "ci": [
       "doctor",
       "check",
       "test",
+      "build-shared",
       "build",
       "test-ui"
     ]

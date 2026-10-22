@@ -1,0 +1,48 @@
+name: Verify
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  macos:
+    name: macos-${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: arm64
+          - runner: macos-15-intel
+            arch: x86_64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.0.1.app/Contents/Developer
+      UV_CACHE_DIR: ${{ github.workspace }}/.build/uv-cache
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.12.19'
+          python-version: '3.12'
+      - name: Confirm native architecture
+        run: test "$(uname -m)" = "${{ matrix.arch }}"
+      - name: Prepare locked dependencies
+        run: uv run --script scripts/dev.py setup
+      - name: Verify candidate
+        run: uv run --script scripts/dev.py verify --scope ci
+      - name: Export harness evidence
+        if: always()
+        run: |
+          mkdir -p artifacts/harness-export
+          cp -R .git/ai-dev-harness/runs artifacts/harness-export/ || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: evidence-${{ matrix.arch }}-${{ github.sha }}
+          path: |
+            artifacts/harness-export
+            artifacts/*.xcresult
+          retention-days: 14

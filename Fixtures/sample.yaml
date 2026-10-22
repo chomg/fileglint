@@ -1,0 +1,6 @@
+# Comments are available in Raw
+name: Fileglint
+items: [one, two, three]
+enabled: true
+---
+message: Hello, 세계
