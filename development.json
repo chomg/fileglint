@@ -1,0 +1,26 @@
+{
+  "schema_version": 2,
+  "commands": {
+    "doctor": null,
+    "setup": null,
+    "dev": null,
+    "check": null,
+    "test": null,
+    "test-ui": null,
+    "build": null
+  },
+  "verification": {
+    "local": [
+      "check",
+      "test",
+      "build"
+    ],
+    "ci": [
+      "doctor",
+      "check",
+      "test",
+      "build",
+      "test-ui"
+    ]
+  }
+}

@@ -1,0 +1,41 @@
+# Python helper caches and macOS metadata
+__pycache__/
+*.py[cod]
+.DS_Store
+._*
+
+# Local credentials and environment files
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.local.xcconfig
+/local/
+*.p12
+*.pfx
+*.mobileprovision
+*.provisionprofile
+
+# Local evidence only; CI artifacts are retained outside source control
+/artifacts/
+
+# SwiftPM and Xcode generated output
+.build/
+/build/
+DerivedData/
+*.app/
+*.appex/
+*.dSYM/
+*.xcarchive/
+*.xcresult/
+
+# Personal IDE state; keep shared schemes and dependency locks
+*.xcuserstate
+xcuserdata/
+.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+.swiftpm/security/
+
+# Temporary editor files; shared editor configuration can be tracked
+*.swp
+*.swo
+*~
