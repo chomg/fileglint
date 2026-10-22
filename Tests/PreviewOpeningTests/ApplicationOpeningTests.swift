@@ -89,4 +89,16 @@ struct ApplicationOpeningTests {
         #expect(throws: (any Error).self) { try PeerTrust.requirement(for: unsigned) }
         #expect(throws: (any Error).self) { try PeerTrust.requirement(for: URL(fileURLWithPath: "/not-a-signed-peer")) }
     }
+
+    @Test func bootstrapBookmarkMustNameTheExactSignedBundle() throws {
+        let bundle = URL(fileURLWithPath: "/System/Applications/TextEdit.app")
+        let bookmark = try bundle.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
+        #expect(try PeerTrust.requirement(for: bundle, bookmark: bookmark) == PeerTrust.requirement(for: bundle))
+        #expect(throws: (any Error).self) {
+            try PeerTrust.requirement(for: URL(fileURLWithPath: "/System/Applications/Calculator.app"), bookmark: bookmark)
+        }
+        for invalid in [Data(), Data([1, 2, 3]), Data(repeating: 0, count: OpenRequest.maximumBookmarkBytes + 1)] {
+            #expect(throws: (any Error).self) { try PeerTrust.requirement(for: bundle, bookmark: invalid) }
+        }
+    }
 }

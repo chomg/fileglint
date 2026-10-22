@@ -18,21 +18,27 @@ association changes, stored app choice or sandbox exception is introduced.
 
 ## Verification in progress
 
-On macOS 27.0.1 arm64 / Xcode 27.1, 34 Swift Testing tests passed. The required
+On macOS 27.0.1 arm64 / Xcode 27.1, 35 Swift Testing tests passed. The required
 local scope passed checks, tests, shared compilation and the universal native
 host/extension/launcher build. Reports and final head-specific hosted evidence
 will be linked in the issue/PR. Native synthetic-sample UI journeys also assert
 that real-file opening controls are not hittable; the hosted matrix owns this
 suite because this host's existing XCTest automation limitation is unchanged.
 
-The feasibility experiment's seven Finder journeys remain evidence for the
-architecture, not acceptance of this production candidate. Production Finder
-validation must exercise the actual header controls and signed nested launcher,
-compare app menus/defaults, verify original target document URLs and unchanged
-hashes/defaults, check keyboard/Escape/light/dark and invalid Raw, and test a
-temporary app registration/removal. The desktop locked before the initial
-product-button check; the user has been asked to unlock. Do not recast missing
-controls in a locked session as a product pass/failure.
+The production Finder menu displays the registered default and alternatives, and
+its TextEdit selection opened the original JSON (verified by the target window's
+document URL). This exposed a sandbox denial while reading the enclosing bundle
+for signature trust. The fix uses a bounded bundle-bookmark bootstrap with no
+opening method, followed by an anonymous endpoint enforcing both peers' signed
+requirements. The local gate now includes an actual sandboxed launcher round
+trip that rejects an unregistered app without launching anything. This passed;
+the earlier injected-only tests could not detect that integration failure.
+
+Remaining current-candidate Finder checks cover all suffixes, menu parity,
+normal/invalid sources, original target URLs, modes/copy and both appearances,
+registration/removal, unchanged hashes/defaults and keyboard cancellation. Key
+injection has not cancelled the remote menu, so physical Escape behavior has
+been requested from the user. Do not count an unreceived automated key as a pass.
 
 ## Next executable step
 

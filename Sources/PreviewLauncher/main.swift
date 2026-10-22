@@ -23,9 +23,35 @@ final class Launcher: NSObject, FileOpeningXPC {
     }
 }
 
-final class ListenerDelegate: NSObject, NSXPCListenerDelegate {
+// Bootstrap can only inspect the exact enclosing extension's signature. Opening
+// lives on a separate endpoint whose requirement is enforced before any request.
+final class Bootstrap: NSObject, OpeningBootstrapXPC {
+    private var session: AuthenticatedListener?
+    func connect(_ bundleBookmark: Data, withReply reply: @escaping (NSXPCListenerEndpoint?, String?) -> Void) {
+        guard session == nil else { reply(nil, OpeningError.invalidRequest.localizedDescription); return }
+        let bundle = Bundle.main.bundleURL.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        do {
+            let requirement = try PeerTrust.requirement(for: bundle, bookmark: bundleBookmark)
+            let session = AuthenticatedListener(requirement: requirement)
+            self.session = session
+            reply(session.listener.endpoint, nil)
+        } catch { reply(nil, error.localizedDescription) }
+    }
+}
+
+final class AuthenticatedListener: NSObject, NSXPCListenerDelegate {
+    let listener = NSXPCListener.anonymous()
+    private var connection: NSXPCConnection?
+    init(requirement: String) {
+        super.init()
+        listener.setConnectionCodeSigningRequirement(requirement)
+        listener.delegate = self
+        listener.resume()
+    }
+    deinit { listener.invalidate(); connection?.invalidate() }
     func listener(_ listener: NSXPCListener, shouldAcceptNewConnection connection: NSXPCConnection) -> Bool {
-        guard connection.effectiveUserIdentifier == geteuid() else { return false }
+        guard self.connection == nil, connection.effectiveUserIdentifier == geteuid() else { return false }
+        self.connection = connection
         connection.exportedInterface = NSXPCInterface(with: FileOpeningXPC.self)
         connection.exportedObject = Launcher()
         connection.resume()
@@ -33,11 +59,17 @@ final class ListenerDelegate: NSObject, NSXPCListenerDelegate {
     }
 }
 
-// The service is nested in this exact preview extension; use its designated signature.
-let extensionBundle = Bundle.main.bundleURL.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-guard let requirement = try? PeerTrust.requirement(for: extensionBundle) else { exit(EXIT_FAILURE) }
+final class ListenerDelegate: NSObject, NSXPCListenerDelegate {
+    func listener(_ listener: NSXPCListener, shouldAcceptNewConnection connection: NSXPCConnection) -> Bool {
+        guard connection.effectiveUserIdentifier == geteuid() else { return false }
+        connection.exportedInterface = NSXPCInterface(with: OpeningBootstrapXPC.self)
+        connection.exportedObject = Bootstrap()
+        connection.resume()
+        return true
+    }
+}
+
 let delegate = ListenerDelegate()
 let listener = NSXPCListener.service()
-listener.setConnectionCodeSigningRequirement(requirement)
 listener.delegate = delegate
 listener.resume()

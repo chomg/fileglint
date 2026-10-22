@@ -37,6 +37,13 @@ Xcode/Finder evidence does not verify this candidate.
 
 ## Application selection development
 
+The normal `build` check also runs `scripts/test_launcher.py`: it signs an isolated
+copy of the built launcher and a minimal sandboxed client, then verifies a real
+XPC round trip rejects an unregistered application. It neither registers apps
+nor opens files, and needs no Finder accessibility. This catches sandbox and
+signature-bootstrap failures that injected AppKit tests cannot exercise. Evidence
+bundles remain under ignored `artifacts/launcher-integration-*`.
+
 The content-header split control opens the current original file in its default
 app; the separate arrow queries compatible installed apps for a one-time choice.
 It is omitted in synthetic host samples. FileglintLauncher.xpc is nested inside

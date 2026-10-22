@@ -49,6 +49,14 @@ Opening never writes files or changes default associations.
 Authenticate both XPC peers with the public macOS 13+ code-signing requirement
 APIs. Derive each peer's requirement from its signed embedded bundle, rather
 than relying on a process ID, hard-coded development team or unsigned fallback.
+The helper cannot read its enclosing extension through its own sandbox. A
+bootstrap connection therefore accepts a bounded ephemeral bookmark naming
+only that exact enclosing bundle, validates its signature and returns an
+anonymous endpoint with that requirement installed before accepting requests.
+The bootstrap protocol has no file-opening method. The client authenticates the
+helper on both connections, and sends the source bookmark only through the
+second, mutually authenticated connection. All scopes/connections are released
+when the request finishes or is cancelled.
 The listener restricts peers to the enclosing extension's designated signature
 and current user; the client restricts replies to its embedded launcher's
 signature. This supports ad hoc development and normal distribution signatures.

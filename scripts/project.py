@@ -76,7 +76,7 @@ def check():
     run(sys.executable, 'scripts/generate_project.py', '--check')
     paths = sorted(Path('Configuration').glob('*'))
     run('plutil', '-lint', 'Fileglint.xcodeproj/project.pbxproj', *map(str, paths))
-    for path in [Path('scripts/project.py'), Path('scripts/generate_project.py')]:
+    for path in [Path('scripts/project.py'), Path('scripts/generate_project.py'), Path('scripts/test_launcher.py')]:
         compile(path.read_text(), str(path), 'exec')
     files = sorted(Path('Sources').rglob('*.swift')) + sorted(Path('Tests').rglob('*.swift')) + sorted(Path('UITests').rglob('*.swift'))
     for path in files:
@@ -108,6 +108,7 @@ def build():
         for architecture in ('arm64', 'x86_64'):
             run('lipo', str(binary), '-verify_arch', architecture)
     print('Universal app, embedded extension and launcher verified (unsigned).', flush=True)
+    run(sys.executable, 'scripts/test_launcher.py')
 
 
 def test_ui():
