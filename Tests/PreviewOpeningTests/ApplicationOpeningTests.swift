@@ -75,6 +75,18 @@ struct ApplicationOpeningTests {
             let status = SecStaticCodeCheckValidity(try #require(code), [], required)
             #expect((status == errSecSuccess) == matches)
         }
+        let unsigned = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.copyItem(at: URL(fileURLWithPath: "/usr/bin/true"), to: unsigned)
+        defer { try? FileManager.default.removeItem(at: unsigned) }
+        let strip = Process()
+        strip.executableURL = URL(fileURLWithPath: "/usr/bin/codesign")
+        strip.arguments = ["--remove-signature", unsigned.path]
+        strip.standardOutput = Pipe()
+        strip.standardError = Pipe()
+        try strip.run()
+        strip.waitUntilExit()
+        try #require(strip.terminationStatus == 0)
+        #expect(throws: (any Error).self) { try PeerTrust.requirement(for: unsigned) }
         #expect(throws: (any Error).self) { try PeerTrust.requirement(for: URL(fileURLWithPath: "/not-a-signed-peer")) }
     }
 }
