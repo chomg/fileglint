@@ -2,8 +2,8 @@
 
 Repository foundation for a native macOS Finder file previewer.
 
-This stage contains project guidance and a generic command runner.
-Product requirements, design and implementation follow in separate commits.
+This stage defines product requirements, design and platform choices.
+Application sources, real command mappings and CI follow with implementation.
 There is no application, dependency installation or active CI at this stage.
 
 ## Inspect the scaffold
@@ -17,6 +17,16 @@ uv run --script scripts/dev.py --list
 All product commands are explicitly unconfigured. Listing them is a
 configuration inspection, not a passing test or build. Configure real
 commands and required local/CI scopes together with the implementation.
+
+## Requirements and design
+
+- [Product requirements](docs/product.md)
+- [Architecture](docs/architecture.md)
+- [Preview RFC](docs/rfcs/0001-structured-preview.md)
+- [Environment decision](docs/decisions/0001-development-environment.md)
+- [Naming decision](docs/decisions/0002-product-name.md)
+- [Planned development](docs/development.md)
+- [Bootstrap scope](docs/tasks/0001-bootstrap.md)
 
 ## Project guidance
 

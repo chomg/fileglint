@@ -7,6 +7,9 @@ Read [workflow](docs/engineering/workflow.md),
 [Git policy](docs/git-policy.md) and
 [command meanings](docs/engineering/command-contract.md).
 Preserve unrelated work and follow the current user-authorized scope.
+Read [product intent](docs/product.md), [architecture](docs/architecture.md),
+[planned development](docs/development.md) and the
+[bootstrap contract](docs/tasks/0001-bootstrap.md) before implementation.
 
 ## Current stage
 
