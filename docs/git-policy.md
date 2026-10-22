@@ -146,7 +146,10 @@ tests; shared compilation; and the universal native app/extension build.
 The CI scope adds `doctor` and native host `test-ui`.
 
 The existing [Verify workflow](../.github/workflows/verify.yml) runs on
-push, pull request and manual dispatch. Required architecture jobs are
+pushes to `main`, pull requests and manual dispatch. Feature-branch pushes
+use the pull request event so each PR update creates one workflow run.
+Branches without an open PR can be checked locally or by manual dispatch.
+Required architecture jobs are
 `macos-arm64` on `macos-15` and `macos-x86_64` on `macos-15-intel`, with
 Xcode 26.0.1. Configure and confirm the host's exact check contexts when
 enabling branch protection; no hosted run currently establishes them.
