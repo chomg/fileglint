@@ -13,7 +13,7 @@
 
 ## Data and interfaces
 
-PreviewDocument is an immutable-input value with Raw, optional Prettified and optional formatting error. Input is at most 1 MiB; formatting is at most 128 KiB input, nesting/indentation is bounded, and output is capped at 4 MiB. Larger supported text stays readable in Raw. Raw preserves decoded input, including BOM and line endings. Formatting is an in-memory representation; JSON retains lexemes, while YAML/TOML may normalize comments, quoting and layout.
+PreviewDocument is an immutable-input value with Raw, optional Prettified and optional formatting error. Input is at most 1 MiB; formatting is at most 128 KiB input, nesting/indentation is bounded, and output is capped at 4 MiB. Larger supported text stays readable in Raw. Raw preserves decoded input, including BOM and line endings. Formatting is an in-memory representation; JSON retains lexemes. YAML/TOML formatting edits original source spacing while preserving comments, scalar spellings, order, indentation and line structure. Yams node marks identify YAML formatting boundaries; a TOML lexical pass protects strings/comments after TOMLKit validation. See [RFC 0002](rfcs/0002-comment-preserving-formatting.md).
 
 Text is attributed native text, not evaluated code or HTML. No settings database, server, telemetry, network preview access, migrations or stored document cache exist. Dependencies are downloaded during setup only.
 

@@ -59,13 +59,10 @@ public struct PreviewDocument: Sendable {
                 _ = try JSONSerialization.jsonObject(with: Data(input.utf8), options: [.fragmentsAllowed])
                 pretty = try Formatting.json(input)
             case .yaml:
-                // Nodes preserve YAML scalar tags and support streams without constructing objects or expanding aliases.
-                let parser = try Yams.Parser(yaml: input)
-                var nodes = [Yams.Node]()
-                while let node = try parser.nextRoot() { nodes.append(node) }
-                pretty = try Yams.serialize(nodes: nodes, indent: 2, allowUnicode: true, sequenceStyle: .block, mappingStyle: .block)
+                pretty = try SourceFormatting.yaml(input)
             case .toml:
-                pretty = try TOMLTable(string: input).convert(to: .toml)
+                _ = try TOMLTable(string: input)
+                pretty = SourceFormatting.toml(input)
             }
             guard (pretty?.utf8.count ?? 0) <= 4_194_304 else { throw PreviewFailure.formattingLimit }
             formattingError = nil

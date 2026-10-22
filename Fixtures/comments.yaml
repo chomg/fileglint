@@ -1,0 +1,24 @@
+# Fileglint configuration — leading comment
+defaults: &defaults # reusable settings
+  greeting: "세계 # value" # inline greeting
+  retries: !!int 3 # explicit tag
+settings:
+  # comment for items
+  items: [1,2,3] # inline array
+  enabled: true
+copy: *defaults # keep the alias
+literal: |+ # literal header
+  # this is scalar content
+  keep  =  [1,2]
+
+folded: >- # folded header
+  words with # inside
+  another line
+# first document trailing comment
+...
+# comment between documents
+---
+# second document leading comment
+"quoted:key": {first: 1, second: [2,3]} # nested flow collection
+url: https://example.com/a#fragment # URL comment
+# final trailing comment

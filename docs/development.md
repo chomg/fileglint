@@ -25,6 +25,16 @@ cd /path/to/fileglint
 uv run --script scripts/dev.py verify --scope local
 ```
 
+## Comment-preservation development
+
+Try Sample now includes a format selector for JSON, YAML and TOML. Choose
+YAML/TOML to inspect standalone and inline comments through the shared
+Raw/Prettified view. The richer `Fixtures/comments.yaml` and
+`Fixtures/comments.toml` cover streams, tags/aliases and multiline values.
+The implementation and current host/check limitations are recorded in the
+[issue #1 handoff](tasks/0002-comment-preservation.md); earlier bootstrap
+Xcode/Finder evidence does not verify this candidate.
+
 ## Command mappings
 
 The product was renamed to Fileglint on 2026-10-22; see [ADR 0002](decisions/0002-product-name.md). The workspace directory was renamed from `macos-previewer` to `/path/to/fileglint` on 2026-10-22 at the user's request. Open the new path in Codex/Xcode; older chat/file links and historical logs can still refer to the original path. Swift/Xcode caches may retain absolute paths; if a moved checkout fails with stale-path errors, preserve logs, then move the generated `.build` and `artifacts/*DerivedData` directories aside and rerun setup/build. Keep historical evidence. The filesystem rename does not rename a remote repository.
@@ -78,7 +88,7 @@ Manual results belong in task 0001; they cannot be inferred from XCTest, `qlmana
 
 ## CI, evidence and preflight
 
-.github/workflows/verify.yml defines the hosted jobs. The user authorized public GitHub source publication; the first hosted run is triggered by the initial main push. Its actual result must be checked separately from local evidence. Required branch checks after repository publication: `macos-arm64` and `macos-x86_64`. Configure them in repository settings; a workflow file does not enable protection. Both must pass at the candidate revision. CI uploads harness reports and xcresult bundles for 14 days; app bundles are verification artifacts, not releases.
+.github/workflows/verify.yml defines the hosted jobs. CI runs on pull requests, pushes to `main` and manual dispatch. A feature-branch push with an open PR triggers only the pull request run; branches without a PR use local verification or manual dispatch. Pushes to `main` verify the merged revision. The user authorized public GitHub source publication; the first hosted run is triggered by the initial main push. Its actual result must be checked separately from local evidence. Required branch checks after repository publication: `macos-arm64` and `macos-x86_64`. Configure them in repository settings; a workflow file does not enable protection. Both must pass at the candidate revision. CI uploads harness reports and xcresult bundles for 14 days; app bundles are verification artifacts, not releases.
 
 Evidence: `<absolute-git-dir>/ai-dev-harness/runs/<run-id>` or ignored artifacts/harness/runs without Git. Each contains run.json and numbered logs. Logs from early interactive compiler iterations may be available only in the chat; the final aggregate records the submitted working tree checks. The user authorized local Git initialization on main and separate skeleton, requirements/design and implementation commits on 2026-10-22. Earlier non-Git reports remain under artifacts/harness; new aggregate reports use .git/ai-dev-harness. Initial history and clean committed verification are recorded in [task 0001](tasks/0001-bootstrap.md#local-git-initialization-and-three-commit-history--2026-10-22). The publication target is [chomg/fileglint](https://github.com/chomg/fileglint), with main as the selected branch. The user authorized repository creation and the initial main-only push; final remote state and first CI results are retained in the publication evidence.
 

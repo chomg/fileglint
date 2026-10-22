@@ -15,7 +15,7 @@ The host app provides setup instructions and a sample preview to diagnose render
 ## Initial scope
 
 - Local UTF-8 files, including a leading UTF-8 BOM, up to 1 MiB. Prettification is available up to 128 KiB with nesting/indentation and a 4 MiB output cap; more complex files remain in Raw with an explanation.
-- JSON, YAML streams and TOML parsed by established parsers; prettification remains in the original format. Formatting may change whitespace, comments, key ordering and quoting; Raw retains the original decoded text.
+- JSON, YAML streams and TOML parsed by established parsers; prettification remains in the original format. YAML/TOML comments, values, source order and line structure are preserved while spacing is normalized; Raw retains the original decoded text. See [comment-preserving formatting](rfcs/0002-comment-preserving-formatting.md) and its authoritative [issue #1](https://github.com/chomg/fileglint/issues/1).
 - Read-only, selectable monospace text, native scrolling, system light/dark colors and keyboard-accessible mode controls.
 - Invalid input remains available in Raw with a visible formatting error. Unsupported encodings, unreadable files and oversized files show actionable messages.
 - No network use or source writes during previews. No default-file-association changes.

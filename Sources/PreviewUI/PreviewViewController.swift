@@ -54,7 +54,8 @@ public final class PreviewViewController: NSViewController {
             self.document = document
             mode.setEnabled(true, forSegment: 0)
             mode.setEnabled(document.pretty != nil, forSegment: 1)
-            status.stringValue = document.formattingError ?? "\(document.format.rawValue.uppercased()) · Read only · Prettified may change comments and layout."
+            let explanation = document.format == .json ? "Prettified changes spacing only." : "Prettified preserves comments; spacing may change."
+            status.stringValue = document.formattingError ?? "\(document.format.rawValue.uppercased()) · Read only · \(explanation)"
         case .failure(let error):
             document = nil
             textView.string = ""

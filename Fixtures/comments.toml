@@ -1,0 +1,32 @@
+# Fileglint configuration — leading comment
+"name.with.dot"="세계 # value" # inline name
+created=2026-10-22T12:00:00Z # date and time
+basic="""
+# this is string content
+keep  =  [1,2]
+""" # after basic multiline
+literal='''
+# this is also string content
+keep  =  [3,4]
+''' # after literal multiline
+four_quotes="""value """" # one quote in value
+five_quotes='''value ''''' # two quotes in value
+
+# preview table comment
+[preview] # table header
+items=[1,2,3] # inline array
+options={enabled=true,label="a=b,#c"} # inline table
+"dotted".key='value # literal' # dotted assignment
+values=[
+  1, # first item
+  # second item comment
+  2,
+] # after multiline array
+
+# first entry comment
+[[tools]] # first entry header
+name="one" # first name
+# second entry comment
+[[tools]]
+name="two"
+# final trailing comment

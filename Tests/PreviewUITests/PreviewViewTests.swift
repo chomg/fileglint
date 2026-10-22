@@ -39,4 +39,35 @@ struct PreviewViewTests {
             #expect(controller.status.stringValue.contains("Cannot prettify"))
         }
     }
+
+    @Test @MainActor func testCommentsRemainVisibleColoredAndCopied() throws {
+        _ = NSApplication.shared
+        let controller = PreviewViewController()
+        for format in [DocumentFormat.yaml, .toml] {
+            let raw = format == .yaml ? "\u{feff}# heading\r\nitems: [1,2] # note\r\n" : "\u{feff}# heading\r\nitems=[1,2] # note\r\n"
+            let document = try PreviewDocument(data: Data(raw.utf8), format: format)
+            for appearance in [NSAppearance.Name.aqua, .darkAqua] {
+                controller.view.appearance = NSAppearance(named: appearance)
+                controller.display(.success(document))
+                controller.mode.selectedSegment = 1
+                #expect(controller.mode.sendAction(controller.mode.action!, to: controller.mode.target))
+                let formatted = try #require(document.pretty)
+                #expect(controller.textView.string == formatted)
+                #expect(controller.textView.isSelectable && !controller.textView.isEditable)
+                let comment = (formatted as NSString).range(of: "# note")
+                #expect(controller.textView.textStorage?.attribute(.foregroundColor, at: comment.location, effectiveRange: nil) as? NSColor == .secondaryLabelColor)
+                #expect(controller.status.stringValue.contains("preserves comments"))
+                let pasteboard = NSPasteboard.withUniqueName()
+                defer { pasteboard.releaseGlobally() }
+                controller.textView.setSelectedRange(NSRange(location: 0, length: (formatted as NSString).length))
+                let types = controller.textView.writablePasteboardTypes
+                #expect(!types.isEmpty)
+                #expect(controller.textView.writeSelection(to: pasteboard, types: types))
+                #expect(pasteboard.string(forType: .string) == formatted)
+                controller.mode.selectedSegment = 0
+                #expect(controller.mode.sendAction(controller.mode.action!, to: controller.mode.target))
+                #expect(controller.textView.string == raw)
+            }
+        }
+    }
 }
