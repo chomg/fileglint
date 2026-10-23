@@ -9,11 +9,13 @@ public struct FoldRegion: Equatable, Sendable, Identifiable {
     public let range: NSRange
     public let contentRange: NSRange
     public let depth: Int
+    public let controlOffset: Int
     private let identity: Int?
 
-    init(kind: Kind, range: NSRange, contentRange: NSRange, depth: Int, id: Int? = nil) {
+    init(kind: Kind, range: NSRange, contentRange: NSRange, depth: Int, id: Int? = nil, controlOffset: Int? = nil) {
         self.kind = kind; self.range = range; self.contentRange = contentRange
         self.depth = depth; self.identity = id
+        self.controlOffset = controlOffset ?? range.location
     }
 }
 
@@ -44,9 +46,10 @@ public struct FoldSession: Sendable {
     public var visibleRegions: [FoldRegion] {
         var result = [FoldRegion]()
         var hidden = [NSRange]()
-        for region in regions {
-            hidden.removeAll { NSMaxRange($0) <= region.range.location }
-            guard !hidden.contains(where: { NSLocationInRange(region.range.location, $0) }) else { continue }
+        let ordered = regions.sorted { $0.controlOffset == $1.controlOffset ? $0.depth < $1.depth : $0.controlOffset < $1.controlOffset }
+        for region in ordered {
+            hidden.removeAll { NSMaxRange($0) <= region.controlOffset }
+            guard !hidden.contains(where: { NSLocationInRange(region.controlOffset, $0) }) else { continue }
             result.append(region)
             if collapsedIDs.contains(region.id) { hidden.append(region.contentRange) }
         }
@@ -88,7 +91,7 @@ enum Folding {
                 // produced by another whitespace-only formatter.
                 guard units[content].contains(where: { ![9, 10, 13, 32].contains($0) }) else { continue }
                 regions.append(FoldRegion(kind: start.kind, range: NSRange(start.offset..<(offset + 1)),
-                                          contentRange: NSRange(content), depth: start.depth))
+                                          contentRange: NSRange(content), depth: start.depth, controlOffset: start.offset + 1))
             default: break
             }
         }

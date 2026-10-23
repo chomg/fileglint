@@ -23,7 +23,7 @@ public final class FoldingTextView: NSTextView {
     public func setDocument(_ text: NSAttributedString, regions: [FoldRegion]) {
         for button in disclosureButtons.values { button.removeFromSuperview() }
         disclosureButtons.removeAll()
-        original = text
+        original = NSAttributedString(attributedString: text)
         lineStarts = [0]; lineLabels.removeAll()
         let units = Array(text.string.utf16)
         for (offset, unit) in units.enumerated() {
@@ -185,7 +185,7 @@ public final class FoldingTextView: NSTextView {
             let candidates = session.visibleRegions.filter { region in
                 sourceCursor >= region.range.location && sourceCursor <= NSMaxRange(region.range)
             }
-            if let region = candidates.last {
+            if let region = candidates.min(by: { $0.range.length == $1.range.length ? $0.depth > $1.depth : $0.range.length < $1.range.length }) {
                 let collapse = event.keyCode == 123
                 if session.collapsedIDs.contains(region.id) != collapse { toggleFold(region.id) }
                 return

@@ -17,6 +17,7 @@ struct StructuredFoldingTests {
             #expect(region.contentRange.length > 0)
             #expect(region.contentRange.location >= region.range.location)
             #expect(NSMaxRange(region.contentRange) <= NSMaxRange(region.range))
+            #expect(region.controlOffset >= region.range.location && region.controlOffset <= region.contentRange.location)
         }
         for (i, a) in regions.enumerated() {
             for b in regions.dropFirst(i + 1) where NSIntersectionRange(a.range, b.range).length > 0 {
@@ -48,6 +49,7 @@ struct StructuredFoldingTests {
         let source = value.pretty! as NSString
         let settings = try #require(value.foldRegions.first { source.substring(with: $0.range).hasPrefix("settings:") && $0.contentRange.location > $0.range.location })
         let content = source.substring(with: settings.contentRange)
+        #expect(settings.controlOffset == settings.contentRange.location)
         #expect(content.contains("# interior comment"))
         #expect(!content.contains("# sibling comment"))
         #expect(!content.contains("sibling:"))
@@ -143,6 +145,7 @@ struct StructuredFoldingTests {
         assertRanges(value)
         let source = value.pretty! as NSString
         let parent = try #require(value.foldRegions.first { source.substring(with: $0.range).hasPrefix("[\"a.b\"]") })
+        #expect(parent.controlOffset == parent.contentRange.location)
         #expect(source.substring(with: parent.range).contains("[\"a.b\".child]"))
         #expect(!source.substring(with: parent.range).contains("# other section"))
         #expect(!source.substring(with: parent.range).contains("[a.b]"))

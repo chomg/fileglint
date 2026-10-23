@@ -8,6 +8,7 @@ public final class PreviewViewController: NSViewController {
     public let status = NSTextField(wrappingLabelWithString: "Choose a file in Finder and press Space.")
     public let opening = OpenWithController()
     private var document: PreviewDocument?
+    private var displayedMode: Int?
 
     public override func loadView() {
         view = NSView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
@@ -59,6 +60,7 @@ public final class PreviewViewController: NSViewController {
 
     public func display(_ result: Result<PreviewDocument, Error>, sourceURL: URL? = nil) {
         loadViewIfNeeded()
+        displayedMode = nil
         mode.selectedSegment = 0
         opening.setSource(sourceURL)
         switch result {
@@ -78,6 +80,8 @@ public final class PreviewViewController: NSViewController {
 
     @objc public func updateDisplayedMode() {
         guard let document else { return }
+        guard displayedMode != mode.selectedSegment else { return }
+        displayedMode = mode.selectedSegment
         let explanation = document.format == .json ? "Prettified changes spacing only." : "Prettified preserves comments; spacing may change."
         let folding = mode.selectedSegment == 1 && !document.foldRegions.isEmpty ? " Fold sections with the arrows; Copy includes hidden text." : ""
         status.stringValue = document.formattingError ?? "\(document.format.rawValue.uppercased()) · Read only · \(explanation)\(folding)"

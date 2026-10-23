@@ -93,6 +93,25 @@ This is real host-sample evidence, not actual Finder acceptance, and the YAML
 correction requires its own hosted candidate evidence. Current validation status
 and the final PR link belong on the authoritative issue to avoid stale claims.
 
+## Disclosure alignment and session semantics
+
+Owned-view visual QA found that controls before keys/markers displaced the
+source indentation. Controls now follow block headings or opening delimiters;
+whole block containers use a synthetic type heading with source-column padding.
+Control sites are independent from range starts, and visibility/copy mapping
+follow those sites. Literal source text keeps its original indentation. The
+stored attributed source is immutable. Re-clicking the selected mode preserves
+the current folding session; an actual mode switch or document load resets it.
+
+Final local verification for this layout/session candidate passed all 55 tests
+in nine suites, shared compilation, universal binaries and the real signed
+sandboxed launcher round trip. Report:
+`.git/ai-dev-harness/runs/20261023T030036Z-88a5c8b1/run.json`; logs:
+`artifacts/issue2-delivery-local.log` and `artifacts/issue2-delivery-development.log`.
+The development signing build also passed. Hosted evidence for the final commit
+and actual Finder acceptance remain required; the locked desktop is still the
+external blocker. No PR has been created before that requested validation.
+
 ## Next executable step
 
 Complete the required hosted matrix for the implementation candidate. After

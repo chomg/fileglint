@@ -9,8 +9,9 @@ Prettified. Raw and original files remain unchanged.
 Keep the full formatted text as the source of truth. PreviewCore supplies
 immutable structural regions in UTF-16 coordinates, matching AppKit text ranges.
 A region identifies its complete container, the interior that may be hidden,
-its kind and nesting depth. IDs are source offsets within one document; they
-are not persistent identities. Ranges are created only after successful bounded
+its kind, control position and nesting depth. IDs derive from source positions
+and representation within one document; they are not persistent identities.
+Ranges are created only after successful bounded
 formatting and refer to that exact formatted string, not Raw offsets.
 
 PreviewUI owns disclosure controls, focus and layout. FoldProjection retains
@@ -22,6 +23,11 @@ logical selection across a placeholder includes its complete hidden source, and
 Select All copies the complete document. Labels and attachment spaces have no
 copied source. Literal source ellipses/object-replacement characters are ordinary
 source spans and are never removed by a text-search replacement rule.
+
+Controls follow a block heading or opening delimiter so they do not shift keys
+or data indentation. Whole block containers receive a synthetic type heading;
+compact sequence entries preserve the original column on the next display line.
+All added heading text/padding has an empty copied source range.
 
 Only visible controls receive button views; scrolling/resizing updates their
 glyph coordinates and key-view chain. Each button has a section/line label and

@@ -20,7 +20,7 @@ public struct FoldProjection: Sendable {
         enum Event { case control(FoldRegion), hide(FoldRegion) }
         var events = [(Int, Int, Event)]()
         for (index, region) in session.visibleRegions.enumerated() {
-            events.append((region.range.location, index * 2, .control(region)))
+            events.append((region.controlOffset, index * 2, .control(region)))
             if session.collapsedIDs.contains(region.id) { events.append((region.contentRange.location, index * 2 + 1, .hide(region))) }
         }
         events.sort { $0.0 == $1.0 ? $0.1 < $1.1 : $0.0 < $1.0 }
@@ -37,15 +37,17 @@ public struct FoldProjection: Sendable {
             switch event {
             case .control(let region):
                 let point = NSRange(location: offset, length: 0)
+                if region.range == region.contentRange { append("\(region.kind.rawValue.capitalized) ", source: point, kind: .annotation) }
                 append("\u{fffc}", source: point, kind: .control(region.id))
-                if region.depth == 0 && region.range == region.contentRange && !session.collapsedIDs.contains(region.id) {
-                    append("\(region.kind.rawValue.capitalized)\n", source: point, kind: .annotation)
+                if region.range == region.contentRange && !session.collapsedIDs.contains(region.id) {
+                    let column = region.range.location - original.lineRange(for: NSRange(location: region.range.location, length: 0)).location
+                    let padding = String(repeating: " ", count: min(128, column))
+                    append("\n\(padding)", source: point, kind: .annotation)
                 }
             case .hide(let region):
                 let range = region.contentRange
                 guard range.location == cursor, NSMaxRange(range) <= original.length else { continue }
-                let marker = range == region.range ? "\(region.kind.rawValue.capitalized) …" : " … "
-                append(marker, source: range, kind: .placeholder(region.id)); cursor = NSMaxRange(range)
+                append(" … ", source: range, kind: .placeholder(region.id)); cursor = NSMaxRange(range)
             }
         }
         if cursor < original.length { let range = NSRange(cursor..<original.length); append(original.substring(with: range), source: range, kind: .source) }

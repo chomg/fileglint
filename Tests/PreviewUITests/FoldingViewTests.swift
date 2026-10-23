@@ -103,6 +103,8 @@ struct FoldingViewTests {
         let view = controller.textView, regions = document.foldRegions
         let oldRoot = try button(view, regions[0].id)
         try button(view, regions[2].id).performClick(nil)
+        #expect(controller.mode.sendAction(controller.mode.action!, to: controller.mode.target))
+        #expect(view.session.collapsedIDs == [regions[2].id])
         try button(view, regions[1].id).performClick(nil)
         layout(controller)
         #expect(view.session.collapsedIDs == [regions[1].id, regions[2].id])

@@ -252,7 +252,7 @@ extension Folding {
             if let open {
                 guard let close = source.flowEnd(open, before: upper, protected: protected) else { return }
                 end = close
-                result.append(FoldRegion(kind: kind, range: NSRange(open..<end), contentRange: NSRange((open + 1)..<(end - 1)), depth: depth, id: identity))
+                result.append(FoldRegion(kind: kind, range: NSRange(open..<end), contentRange: NSRange((open + 1)..<(end - 1)), depth: depth, id: identity, controlOffset: open + 1))
             } else {
                 let start = header ?? offset
                 let row = source.lines[source.line(at: start)]
@@ -260,7 +260,7 @@ extension Folding {
                 end = source.sectionEnd(before: bound, indent: row.indent, protected: scalarRanges)
                 let contentStart = header == nil || header == offset || row.contentEnd >= end ? start : row.contentEnd
                 guard end > contentStart else { return }
-                result.append(FoldRegion(kind: kind, range: NSRange(start..<end), contentRange: NSRange(contentStart..<end), depth: depth, id: identity))
+                result.append(FoldRegion(kind: kind, range: NSRange(start..<end), contentRange: NSRange(contentStart..<end), depth: depth, id: identity, controlOffset: contentStart))
             }
             if case .mapping(let map) = node {
                 let pairs = Array(map).filter { max(source.offset($0.key.mark) ?? -1, source.offset($0.value.mark) ?? -1) >= offset }
@@ -353,7 +353,7 @@ extension Folding {
             let body = String(decoding: source.units[header.end..<end], as: UTF16.self)
             // A comment-only table is empty; leave its comments visible.
             guard body.split(whereSeparator: \.isNewline).contains(where: { !$0.trimmingCharacters(in: .whitespaces).isEmpty && !$0.trimmingCharacters(in: .whitespaces).hasPrefix("#") }) else { continue }
-            result.append(FoldRegion(kind: header.array ? .tableEntry : .table, range: NSRange(header.offset..<end), contentRange: NSRange(header.end..<end), depth: header.path.count - 1))
+            result.append(FoldRegion(kind: header.array ? .tableEntry : .table, range: NSRange(header.offset..<end), contentRange: NSRange(header.end..<end), depth: header.path.count - 1, controlOffset: header.end))
         }
         // Match arrays/inline tables only outside all opaque tokens and headers.
         let ignored = (protected + headerSpans).sorted { $0.location < $1.location }
@@ -367,7 +367,7 @@ extension Folding {
             if u == 93 || u == 125, let (start, _) = opens.popLast() {
                 let content = NSRange((start + 1)..<i)
                 let significant = ((start + 1)..<i).contains { ![9, 10, 13, 32].contains(source.units[$0]) && !source.isProtected($0, comments) }
-                if significant { result.append(FoldRegion(kind: u == 93 ? .array : .object, range: NSRange(start..<(i + 1)), contentRange: content, depth: opens.count + 1)) }
+                if significant { result.append(FoldRegion(kind: u == 93 ? .array : .object, range: NSRange(start..<(i + 1)), contentRange: content, depth: opens.count + 1, controlOffset: start + 1)) }
             }
             i += 1
         }
