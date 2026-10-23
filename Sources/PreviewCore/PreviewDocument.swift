@@ -35,7 +35,6 @@ public struct PreviewDocument: Sendable {
     public private(set) var pretty: String?
     public private(set) var formattingError: String?
     /// Structural metadata for Prettified; presentation is owned by PreviewUI.
-    /// JSON extraction is the first slice of issue #2; YAML/TOML follow.
     public private(set) var foldRegions: [FoldRegion] = []
 
     public static func read(_ url: URL) throws -> PreviewDocument {
@@ -68,7 +67,13 @@ public struct PreviewDocument: Sendable {
                 pretty = SourceFormatting.toml(input)
             }
             guard (pretty?.utf8.count ?? 0) <= 4_194_304 else { throw PreviewFailure.formattingLimit }
-            if format == .json, let pretty { foldRegions = Folding.json(pretty) }
+            if let pretty {
+                switch format {
+                case .json: foldRegions = Folding.json(pretty)
+                case .yaml: foldRegions = try Folding.yaml(pretty)
+                case .toml: foldRegions = Folding.toml(pretty)
+                }
+            }
             formattingError = nil
         } catch {
             pretty = nil

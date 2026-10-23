@@ -53,10 +53,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         switch sampleFormat.indexOfSelectedItem {
         case 1:
             format = .yaml
-            source = "# Fileglint settings\nname: Fileglint # application name\nitems: [1,2,3] # sample values\n"
+            source = "# Fileglint settings\nname: Fileglint # application name\nitems: [1,2,3] # sample values\npreview:\n  # display settings\n  enabled: true\n  nested:\n    values: [4,5]\n"
         case 2:
             format = .toml
-            source = "# Fileglint settings\nname=\"Fileglint\" # application name\nitems=[1,2,3] # sample values\n"
+            source = "# Fileglint settings\nname=\"Fileglint\" # application name\nitems=[1,2,3] # sample values\n\n# display settings\n[preview]\nenabled=true\n[preview.nested]\nvalues=[4,5]\n"
         default:
             format = .json
             source = #"{"name":"Fileglint","enabled":true,"items":[1,2,3]}"#

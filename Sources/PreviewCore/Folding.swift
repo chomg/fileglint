@@ -3,12 +3,18 @@ import Foundation
 /// Coordinates address the complete, immutable Prettified string in UTF-16.
 /// A region's ID is local to that string and must not survive a document change.
 public struct FoldRegion: Equatable, Sendable, Identifiable {
-    public enum Kind: Equatable, Sendable { case object, array }
-    public var id: Int { range.location }
+    public enum Kind: String, Equatable, Sendable { case object, array, mapping, sequence, table, tableEntry }
+    public var id: Int { identity ?? range.location }
     public let kind: Kind
     public let range: NSRange
     public let contentRange: NSRange
     public let depth: Int
+    private let identity: Int?
+
+    init(kind: Kind, range: NSRange, contentRange: NSRange, depth: Int, id: Int? = nil) {
+        self.kind = kind; self.range = range; self.contentRange = contentRange
+        self.depth = depth; self.identity = id
+    }
 }
 
 /// Session state is independent of AppKit and never alters the formatted text.
@@ -19,7 +25,11 @@ public struct FoldSession: Sendable {
     private let validIDs: Set<Int>
 
     public init(regions: [FoldRegion]) {
-        self.regions = regions.sorted { $0.range.location < $1.range.location }
+        self.regions = regions.sorted {
+            if $0.range.location != $1.range.location { return $0.range.location < $1.range.location }
+            if $0.range.length != $1.range.length { return $0.range.length > $1.range.length }
+            return $0.depth < $1.depth
+        }
         validIDs = Set(regions.map(\.id))
     }
 

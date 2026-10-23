@@ -19,12 +19,15 @@ PreviewDocument is an immutable-input value with Raw, optional Prettified and op
 
 Text is attributed native text, not evaluated code or HTML. No settings database, server, telemetry, network preview access, migrations or stored document cache exist. Dependencies are downloaded during setup only.
 
-Prettified folding is in progress under [issue #2](https://github.com/chomg/fileglint/issues/2)
-and [RFC 0004](rfcs/0004-prettified-folding.md). PreviewCore now supplies immutable
-JSON container ranges in formatted UTF-16 coordinates and a transient FoldSession
-that retains hidden child states. Text remains complete and unchanged; YAML/TOML
-range extraction, disclosure presentation and copy mapping are subsequent work.
-No folding controls are exposed by this initial model slice.
+Prettified folding follows [issue #2](https://github.com/chomg/fileglint/issues/2)
+and [RFC 0004](rfcs/0004-prettified-folding.md). PreviewCore supplies immutable
+formatted UTF-16 ranges for JSON containers, parsed YAML mappings/sequences and
+validated TOML tables/arrays. A transient FoldSession retains hidden child states;
+FoldProjection maps visible text, synthetic labels/controls and collapsed ranges
+to the complete source. FoldingTextView preserves attributed source text, adds
+inline native buttons only in the viewport and exports logical selections as
+plain source text, including hidden content. Mode/document changes replace the
+session. No formatting/source text is removed or persisted by folding.
 
 ## Platform ownership
 
