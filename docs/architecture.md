@@ -28,6 +28,10 @@ to the complete source. FoldingTextView preserves attributed source text, adds
 inline native buttons only in the viewport and exports logical selections as
 plain source text, including hidden content. Mode/document changes replace the
 session. No formatting/source text is removed or persisted by folding.
+The buttons live beside the text view in NSClipView, so FoldingScrollView exposes
+them as independent accessibility contents rather than children of a text area.
+The text retains native selection and accessibility; UI attachment spaces are
+excluded from the accessibility hierarchy.
 
 ## Platform ownership
 

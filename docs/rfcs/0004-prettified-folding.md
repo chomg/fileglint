@@ -36,10 +36,16 @@ at the cursor and Command-Option-Right expands it. Finder keyboard entry uses th
 same Full Keyboard Access setting as the existing Open controls. No global key
 monitor, focus stealing, Escape override or system preference change is added.
 
-Only these native buttons are accessibility children. TextKit's additional
-attachment objects represent presentation-only spaces and are excluded to avoid
-duplicate arrows and thousands of off-screen children. The text view retains
-its inherited accessible text value, selection and range operations.
+The buttons are sibling views of the text view inside NSClipView. FoldingScrollView
+exposes the text and visible buttons as separate accessibility contents, with
+native parent relationships and linear navigation order. Buttons inside the
+text accessibility element were not reachable by Finder's Full Keyboard Access
+in physical testing; adding layout notifications alone did not resolve it.
+TextKit's attachment objects are presentation-only spaces and excluded from the
+text element's children to avoid duplicate arrows and thousands of off-screen
+items. Native text value, selection and range operations remain available.
+Layout/value notifications report control changes without forcing focus or
+changing user preferences. Borderless buttons use an exterior focus ring.
 
 Fold state is an in-memory value for one Prettified session. A parent hides its
 descendants' controls without deleting their collapsed states. Reopening the

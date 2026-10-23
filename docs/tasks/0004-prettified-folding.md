@@ -176,3 +176,82 @@ The correction passed the complete local scope: 55 tests in nine suites,
 shared compilation, universal binaries and the real sandboxed launcher round
 trip (`20261023T045709Z-7102266e`; `artifacts/issue2-accessibility-local.log`).
 The signed development build passed (`artifacts/issue2-accessibility-development.log`).
+
+## Physical keyboard failure and scroll-content correction
+
+Candidate `e486187` passed both hosted targets in
+[run 39903203557](https://github.com/chomg/fileglint/actions/runs/39903203557).
+Downloaded reports/logs establish all six steps, 55 tests, universal binaries,
+the sandboxed launcher regression and three host UI tests without failures on
+each architecture (`artifacts/issue2-ci-accessibility/`). Actual Finder checks
+also passed all formats, logical copying, array-of-table entries, rapid
+navigation, byte limits and bounded accessibility while scrolling. These passes
+do not establish keyboard entry: the user could not Tab to the arrows with
+Full Keyboard Access enabled, although Escape closed the preview normally.
+A layout/value-notification and exterior-focus-ring prototype also failed the
+user's physical retry.
+
+The next correction moves native buttons from inside NSTextView to sibling
+views in NSClipView. FoldingScrollView exposes visible buttons as independent
+accessibility contents and navigation children with native scroll-area parents.
+The text remains an accessible leaf with native value/selection operations;
+presentation attachments are excluded. A focused regression failed three
+hierarchy assertions before the correction and now passes, including actual
+native hit testing, retained first responder and removal on Raw switching.
+Evidence: `artifacts/issue2-scroll-peer-before.log` and
+`artifacts/issue2-scroll-peer-components.log`.
+
+The uncommitted correction passed the full local scope: **56 tests in nine
+suites**, shared compilation, universal binaries and the real sandboxed
+launcher regression. Report: `20261023T060812Z-3a15c206`; logs:
+`artifacts/issue2-scroll-peer-local.log` and
+`artifacts/issue2-scroll-peer-development.log` (signed build passed).
+The refreshed actual development host exposes the text and two sample buttons
+as scroll-area contents/navigation children, with correct native parents and
+no nested text children (`artifacts/issue2-scroll-peer-host-hierarchy.json`).
+Owned off-screen light/dark renders retain aligned visible controls; this is
+component layout evidence, not a screen capture or physical keyboard evidence.
+
+The signed provider has been refreshed and the owned YAML fixture revealed.
+The user must open Quick Look manually because automatic approval review
+previously rejected a generic Finder opening key. Physical Tab/Shift-Tab and
+Space acceptance is pending for this structural correction. Do not count the
+earlier hosted run as verification of the uncommitted correction. After that
+acceptance, recheck actual Finder copying/scrolling and all formats, record the
+final candidate's local and hosted evidence, and create the single PR.
+
+### Physical acceptance and final Finder regression
+
+The user confirmed that Tab/Shift-Tab entry and Space folding now work with
+Full Keyboard Access enabled. The preference was read as enabled and left
+unchanged. The earlier physical Escape result remains passing; no Escape
+handler was added. Actual Finder exposes eight YAML buttons as independent
+scroll contents/navigation children with native scroll-area parents
+(`artifacts/issue2-scroll-peer-finder-hierarchy.json`).
+
+The refreshed signed provider passed JSON/YAML/`.yml`/TOML nested folding,
+retained child state, full/partial logical copying, exact expansion/Raw
+restoration, same-mode retention and mode reset. Independent TOML table-entry
+folding preserves the other entry/comments and copies complete text. Rapid
+file navigation restores the final file's exact Raw with no stale folds.
+Invalid input, valid 131,075-byte JSON and 1,048,577-byte input retain the
+expected fallback/error and remove stale controls. Evidence:
+`artifacts/issue2-scroll-peer-finder-formats.log`,
+`artifacts/issue2-scroll-peer-extras.log` and
+`artifacts/issue2-scroll-peer-boundaries.log`, with per-action JSON reports.
+
+The 2,001-container Finder document passed scrolling, collapse, full logical
+copy and expansion around source line 1,565; native accessibility exposed
+12 controls initially and 11 after scrolling. The first diagnostic stopped
+at line 935 because a single scrollbar action did not reach its required far
+position. That incomplete run is retained and excluded. The corrected probe
+requires an actual source line beyond 1,000 before checking fold/copy actions;
+it passed (`artifacts/issue2-scroll-peer-large-complete.log`). All six owned
+fixture hashes remain unchanged. Every final copy probe confirms restoration
+of the saved clipboard; the earlier delayed-pasteboard probe's unconfirmed
+restoration remains a recorded diagnostic limitation, not a passing result.
+
+Complete a clean committed local verification and both hosted targets for this
+final correction before PR creation. Record those final reports on issue #2.
+Minimum macOS 14 and Intel Finder remain not-run release validation targets;
+hosted Intel sample UI tests do not establish Intel Finder acceptance.

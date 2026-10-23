@@ -7,6 +7,28 @@ private final class DisclosureSpace: NSTextAttachmentCell {
     override func draw(withFrame cellFrame: NSRect, in controlView: NSView?) {}
 }
 
+/// Expose controls beside the text accessibility element so motor navigation
+/// can discover each disclosure independently of text interaction.
+@MainActor
+final class FoldingScrollView: NSScrollView {
+    override func accessibilityContents() -> [Any]? {
+        guard let documentView else { return [] }
+        let buttons = (documentView as? FoldingTextView)?.disclosureControls.filter {
+            $0.frame.intersects(contentView.bounds)
+        } ?? []
+        return NSAccessibility.unignoredChildren(from: [documentView] + buttons)
+    }
+
+    override func accessibilityChildren() -> [Any]? {
+        let scrollers: [NSView] = [hasVerticalScroller ? verticalScroller : nil, hasHorizontalScroller ? horizontalScroller : nil].compactMap { $0 }
+        return (accessibilityContents() ?? []) + NSAccessibility.unignoredChildren(from: scrollers)
+    }
+
+    override func accessibilityChildrenInNavigationOrder() -> [any NSAccessibilityElementProtocol]? {
+        accessibilityChildren()?.compactMap { $0 as? any NSAccessibilityElementProtocol }
+    }
+}
+
 @MainActor
 public final class FoldingTextView: NSTextView {
     public private(set) var session = FoldSession(regions: [])
@@ -14,6 +36,7 @@ public final class FoldingTextView: NSTextView {
     private var original = NSAttributedString(string: "")
     private var regionsByID = [Int: FoldRegion]()
     private var disclosureButtons = [Int: NSButton]()
+    private var accessibleFrames = [ObjectIdentifier: NSRect]()
     private var clipObserver: NSObjectProtocol?
     private var updatingButtons = false
     private var lineStarts = [0]
@@ -47,6 +70,9 @@ public final class FoldingTextView: NSTextView {
         let end = projection.displayOffset(forSourceOffset: to, trailing: true)
         setSelectedRange(NSRange(location: start, length: max(0, end - start)))
         if let viewport, let scroll = enclosingScrollView { scroll.contentView.scroll(to: viewport); scroll.reflectScrolledClipView(scroll.contentView) }
+        if let button = disclosureButtons[id] {
+            NSAccessibility.post(element: NSAccessibility.unignoredDescendant(of: button) ?? button, notification: .valueChanged)
+        }
     }
 
     private func render() {
@@ -88,11 +114,13 @@ public final class FoldingTextView: NSTextView {
     public override func layout() { super.layout(); updateDisclosureButtons() }
 
     public override func accessibilityChildren() -> [Any]? {
-        // TextKit exposes every attachment as an additional AXUnknown child,
-        // including off-screen arrows. These are presentation-only spaces;
-        // expose each visible native button once. The text view keeps its
-        // inherited accessible text value, selection and range operations.
-        return disclosureButtons.values.sorted {
+        // Attachments are presentation-only spaces. Actual controls are peers
+        // in the clip view, outside this atomic text accessibility element.
+        []
+    }
+
+    var disclosureControls: [NSButton] {
+        disclosureButtons.values.sorted {
             $0.frame.minY == $1.frame.minY ? $0.frame.minX < $1.frame.minX : $0.frame.minY < $1.frame.minY
         }
     }
@@ -100,8 +128,16 @@ public final class FoldingTextView: NSTextView {
     private func updateDisclosureButtons() {
         guard !updatingButtons else { return }
         updatingButtons = true
-        defer { updatingButtons = false }
-        guard !projection.controls.isEmpty, let manager = layoutManager, let container = textContainer else {
+        defer {
+            updatingButtons = false
+            let frames = Dictionary(uniqueKeysWithValues: disclosureButtons.values.map { (ObjectIdentifier($0), $0.frame) })
+            if frames != accessibleFrames {
+                accessibleFrames = frames
+                NSAccessibility.post(element: enclosingScrollView ?? self, notification: .layoutChanged)
+            }
+        }
+        guard !projection.controls.isEmpty, let manager = layoutManager, let container = textContainer,
+              let buttonHost = enclosingScrollView?.contentView else {
             for button in disclosureButtons.values { button.removeFromSuperview() }
             disclosureButtons.removeAll(); nextKeyView = afterDisclosures
             return
@@ -122,11 +158,12 @@ public final class FoldingTextView: NSTextView {
             let rect = manager.boundingRect(forGlyphRange: range, in: container).offsetBy(dx: textContainerInset.width, dy: textContainerInset.height)
             guard rect.intersects(viewport) else { continue }
             let button = disclosureButtons[id] ?? NSButton()
-            if button.superview == nil { addSubview(button) }
-            button.frame = NSRect(x: rect.minX, y: rect.minY, width: 19, height: max(17, rect.height))
+            if button.superview !== buttonHost { buttonHost.addSubview(button, positioned: .above, relativeTo: self) }
+            button.frame = convert(NSRect(x: rect.minX, y: rect.minY, width: 19, height: max(17, rect.height)), to: buttonHost)
             let collapsed = session.collapsedIDs.contains(id)
             button.image = NSImage(systemSymbolName: collapsed ? "chevron.right" : "chevron.down", accessibilityDescription: nil)
             button.isBordered = false
+            button.focusRingType = .exterior
             button.imagePosition = .imageOnly
             button.contentTintColor = .secondaryLabelColor
             button.target = self; button.action = #selector(toggleDisclosure(_:)); button.tag = id

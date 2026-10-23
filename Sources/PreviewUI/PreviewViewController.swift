@@ -28,7 +28,7 @@ public final class PreviewViewController: NSViewController {
         textView.isHorizontallyResizable = false
         textView.textContainer?.widthTracksTextView = true
         textView.setAccessibilityIdentifier("preview-content")
-        let scroll = NSScrollView()
+        let scroll = FoldingScrollView()
         scroll.hasVerticalScroller = true
         scroll.documentView = textView
         status.setAccessibilityIdentifier("preview-status")
