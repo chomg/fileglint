@@ -18,11 +18,11 @@ final class PreviewController: NSViewController, QLPreviewingController {
         loadViewIfNeeded()
         let id = UUID()
         requestID = id
-        preview.display(.failure(NSError(domain: "Fileglint", code: 0, userInfo: [NSLocalizedDescriptionKey: "Loading preview…"])))
+        preview.display(.failure(NSError(domain: "Fileglint", code: 0, userInfo: [NSLocalizedDescriptionKey: "Loading preview…"])), sourceURL: url)
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let result = Result { try PreviewDocument.read(url) }
             DispatchQueue.main.async { [weak self] in
-                if self?.requestID == id { self?.preview.display(result) }
+                if self?.requestID == id { self?.preview.display(result, sourceURL: url) }
                 // Display read/parse failures inline rather than replacing them with a generic OS failure.
                 handler(nil)
             }

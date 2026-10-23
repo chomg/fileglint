@@ -50,12 +50,13 @@ for name, source, product_type, suffix, plist in [
     ('Fileglint', 'Sources/PreviewHost/main.swift', 'application', 'app', 'Host'),
     ('FileglintExtension', 'Sources/PreviewExtension/PreviewController.swift', 'app-extension', 'appex', 'Extension'),
     ('HostUITests', 'UITests/HostUITests.swift', 'bundle.ui-testing', 'xctest', None),
+    ('FileglintLauncher', 'Sources/PreviewLauncher/main.swift', 'xpc-service', 'xpc', 'Launcher'),
 ]:
     source_ref = ref(source, 'sourcecode.swift')
     source_refs.append(source_ref)
     compiled = add(name + 'source', 'PBXBuildFile', fileRef=source_ref)
     product = add(name + 'product', 'PBXFileReference', explicitFileType={
-        'app': 'wrapper.application', 'appex': 'wrapper.app-extension', 'xctest': 'wrapper.cfbundle'
+        'app': 'wrapper.application', 'appex': 'wrapper.app-extension', 'xctest': 'wrapper.cfbundle', 'xpc': 'wrapper.xpc-service'
     }[suffix], path=name + '.' + suffix, sourceTree='BUILT_PRODUCTS_DIR')
     products.append(product)
     source_phase = add(name + 'sources', 'PBXSourcesBuildPhase', buildActionMask=2147483647,
@@ -63,7 +64,7 @@ for name, source, product_type, suffix, plist in [
     package_products = []
     linked = []
     if suffix != 'xctest':
-        for library in ['PreviewUI', 'PreviewCore']:
+        for library in (['PreviewOpening'] if suffix == 'xpc' else ['PreviewUI', 'PreviewCore']):
             dependency = add(name + library, 'XCSwiftPackageProductDependency', package=package, productName=library)
             package_products.append(dependency)
             linked.append(add(name + library + 'link', 'PBXBuildFile', productRef=dependency))
@@ -79,6 +80,9 @@ for name, source, product_type, suffix, plist in [
     if suffix == 'appex':
         settings.update(APPLICATION_EXTENSION_API_ONLY='YES', SKIP_INSTALL='YES',
                         PRODUCT_BUNDLE_IDENTIFIER='dev.fileglint.Fileglint.PreviewExtension')
+    if suffix == 'xpc':
+        settings.update(SKIP_INSTALL='YES', APPLICATION_EXTENSION_API_ONLY='YES',
+                        PRODUCT_BUNDLE_IDENTIFIER='dev.fileglint.Fileglint.Launcher')
     if suffix == 'xctest':
         settings.update(TEST_TARGET_NAME='Fileglint', ENABLE_HARDENED_RUNTIME='NO')
     target = add(name, 'PBXNativeTarget', name=name, productName=name, productReference=product,
@@ -98,6 +102,15 @@ copy = add('embedExtensions', 'PBXCopyFilesBuildPhase', buildActionMask=21474836
 objects[targets[0]]['dependencies'] = [dependency]
 objects[targets[0]]['buildPhases'].append(copy)
 objects[targets[2]]['dependencies'] = [add('hostDependency', 'PBXTargetDependency', target=targets[0])]
+# A separately sandboxed, on-demand launcher belongs to the preview extension.
+launcher_proxy = add('launcherProxy', 'PBXContainerItemProxy', containerPortal=ident('project'), proxyType=1,
+                     remoteGlobalIDString=targets[3], remoteInfo='FileglintLauncher')
+objects[targets[1]]['dependencies'].append(add('launcherDependency', 'PBXTargetDependency', target=targets[3], targetProxy=launcher_proxy))
+launcher_file = add('embeddedLauncher', 'PBXBuildFile', fileRef=products[3],
+                    settings={'ATTRIBUTES': ['CodeSignOnCopy', 'RemoveHeadersOnCopy']})
+objects[targets[1]]['buildPhases'].append(add('embedLauncher', 'PBXCopyFilesBuildPhase', buildActionMask=2147483647,
+    dstPath='$(CONTENTS_FOLDER_PATH)/XPCServices', dstSubfolderSpec=16, files=[launcher_file],
+    name='Embed File Launcher', runOnlyForDeploymentPostprocessing=0))
 product_group = add('products', 'PBXGroup', children=products, name='Products', sourceTree='<group>')
 main_group = add('mainGroup', 'PBXGroup', children=source_refs + [product_group], sourceTree='<group>')
 project = add('project', 'PBXProject', attributes={'LastUpgradeCheck': '2600', 'TargetAttributes': {

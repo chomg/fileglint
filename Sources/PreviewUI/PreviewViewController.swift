@@ -6,6 +6,7 @@ public final class PreviewViewController: NSViewController {
     public let mode = NSSegmentedControl(labels: ["Raw", "Prettified"], trackingMode: .selectOne, target: nil, action: nil)
     public let textView = NSTextView()
     public let status = NSTextField(wrappingLabelWithString: "Choose a file in Finder and press Space.")
+    public let opening = OpenWithController()
     private var document: PreviewDocument?
 
     public override func loadView() {
@@ -30,7 +31,14 @@ public final class PreviewViewController: NSViewController {
         scroll.hasVerticalScroller = true
         scroll.documentView = textView
         status.setAccessibilityIdentifier("preview-status")
-        let stack = NSStackView(views: [mode, status, scroll])
+        let spacer = NSView()
+        spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        let header = NSStackView(views: [mode, spacer, opening.buttons])
+        header.alignment = .centerY
+        header.spacing = 8
+        mode.nextKeyView = opening.mainButton
+        opening.menuButton.nextKeyView = textView
+        let stack = NSStackView(views: [header, status, opening.status, scroll])
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 10
@@ -41,14 +49,17 @@ public final class PreviewViewController: NSViewController {
             stack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
             stack.topAnchor.constraint(equalTo: view.topAnchor, constant: 12),
             stack.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -12),
+            header.widthAnchor.constraint(equalTo: stack.widthAnchor),
+            opening.status.widthAnchor.constraint(equalTo: stack.widthAnchor),
             scroll.widthAnchor.constraint(equalTo: stack.widthAnchor),
             status.widthAnchor.constraint(equalTo: stack.widthAnchor),
         ])
     }
 
-    public func display(_ result: Result<PreviewDocument, Error>) {
+    public func display(_ result: Result<PreviewDocument, Error>, sourceURL: URL? = nil) {
         loadViewIfNeeded()
         mode.selectedSegment = 0
+        opening.setSource(sourceURL)
         switch result {
         case .success(let document):
             self.document = document
