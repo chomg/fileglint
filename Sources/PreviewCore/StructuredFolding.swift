@@ -302,7 +302,9 @@ extension Folding {
         let comments = tokens.filter { $0.kind == .comment }.map(\.range)
         var commentStarts = [Int: Int]()
         for comment in comments { commentStarts[source.lines[source.line(at: comment.location)].start] = comment.location }
-        struct Header { let offset: Int; let end: Int; let path: [String]; let array: Bool }
+        // TOML keys use exact decoded code points. Swift String equality would
+        // conflate distinct NFC/NFD names and fold unrelated table sections.
+        struct Header { let offset: Int; let end: Int; let path: [Data]; let array: Bool }
         var headers = [Header](), headerSpans = [NSRange]()
         var valueDepth = 0
         for row in source.lines {
@@ -330,7 +332,7 @@ extension Folding {
             var path = [String](), current = table
             while current.keys.count == 1, let key = current.keys.first, let child = current[key]?.table { path.append(key); current = child }
             guard !path.isEmpty else { continue }
-            headers.append(Header(offset: start, end: row.contentEnd, path: path, array: array))
+            headers.append(Header(offset: start, end: row.contentEnd, path: path.map { Data($0.utf8) }, array: array))
             headerSpans.append(NSRange(start..<row.contentEnd))
             isHeader = true
         }

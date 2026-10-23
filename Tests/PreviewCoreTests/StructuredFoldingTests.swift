@@ -154,6 +154,14 @@ struct StructuredFoldingTests {
         #expect(source.substring(with: entries[0].range).contains("[tools.options]"))
         #expect(!source.substring(with: entries[0].range).contains("# second entry"))
         #expect(!source.substring(with: entries[1].range).contains("# trailing"))
+        // Swift String equality is canonically equivalent; TOML keys retain
+        // their exact decoded code points and must not merge NFC/NFD paths.
+        let unicode = try doc("[\"é\"]\na=1\n[\"e\u{301}\".child]\nb=2\n", .toml)
+        let unicodeText = unicode.pretty! as NSString
+        let next = unicodeText.range(of: "[\"e\u{301}\".child]", options: .literal).location
+        #expect(NSMaxRange(unicode.foldRegions[0].range) <= next)
+        let escaped = try doc("[\"\\u00E9\"]\na=1\n[\"é\".child]\nb=2\n", .toml)
+        #expect((escaped.pretty! as NSString).substring(with: escaped.foldRegions[0].range).contains("[\"é\".child]"))
     }
 
     @Test func tomlMultilineStringsNestedArraysAndCommentsStayOpaque() throws {

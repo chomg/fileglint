@@ -112,6 +112,27 @@ The development signing build also passed. Hosted evidence for the final commit
 and actual Finder acceptance remain required; the locked desktop is still the
 external blocker. No PR has been created before that requested validation.
 
+## Exact TOML identities and rendered-text assertion
+
+A failing regression proved that Swift canonical String equality could combine
+distinct NFC/NFD TOML key paths, incorrectly including an unrelated child table.
+Decoded paths now compare UTF-8 bytes; equivalent escaped spellings still share
+the correct namespace. The complete local scope passed with all 55 tests and
+native builds (`20261023T031435Z-074dbaf9`; `artifacts/issue2-exact-keys-local.log`).
+The signed development build passed (`artifacts/issue2-exact-keys-development.log`).
+
+Layout revision `6d1bff6` failed hosted UI verification on both architectures in
+[run 39892991415](https://github.com/chomg/fileglint/actions/runs/39892991415).
+Actual reports/logs show all earlier steps passed, and the three host UI methods
+ran. The new folding/copy/reset method passed on both targets; the existing
+comments method failed its displayed `[1, 2, 3]` substring assertion twice
+because a disclosure is now inside the opening bracket. The assertion now checks
+the visible values/comment while retaining the exact full copied-source
+comparison. The final syntax/project check passed after that test-only edit
+(`artifacts/issue2-exact-keys-final-check.log`). Retained failed evidence:
+`artifacts/issue2-ci-layout-failed/`. A fresh hosted run must verify the final
+commit; the earlier failed run is not counted as passing or silently retried.
+
 ## Next executable step
 
 Complete the required hosted matrix for the implementation candidate. After

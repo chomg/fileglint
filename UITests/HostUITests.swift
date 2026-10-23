@@ -44,7 +44,9 @@ final class HostUITests: XCTestCase {
             let formatted = try XCTUnwrap(content.value as? String)
             XCTAssertTrue(formatted.hasPrefix("# Fileglint settings\n"))
             XCTAssertTrue(formatted.contains("# application name\n"))
-            XCTAssertTrue(formatted.contains("[1, 2, 3] # sample values"))
+            // The opening marker now has an inline disclosure after it. Check
+            // visible data/comments here; exact source is checked on Copy below.
+            XCTAssertTrue(formatted.contains("1, 2, 3] # sample values"), formatted)
             content.click()
             content.typeKey("a", modifierFlags: .command)
             content.typeKey("c", modifierFlags: .command)

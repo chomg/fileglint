@@ -70,7 +70,9 @@ only anchors within actually hidden interiors are suppressed.
 TOML protects strings/comments with the existing source lexer after validation.
 Bracket depth distinguishes headers from multiline array rows. TOMLKit decodes
 isolated header key paths, so quoted dots and escape spellings have the right
-hierarchy. A source-order stack closes tables before unrelated/sibling headers
+hierarchy. Compare decoded UTF-8 key bytes rather than Swift's canonical String
+equality: distinct NFC/NFD names stay separate while equivalent escape spellings
+refer to the same key. A source-order stack closes tables before unrelated/sibling headers
 or the next array-of-table entry. Leading boundary comments stay visible with
 the following section. Only contiguous descendant sections belong to a table
 fold; later descendants beyond an unrelated table retain separate controls.
