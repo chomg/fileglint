@@ -124,6 +124,41 @@ private struct FoldSource {
         }
         return nil
     }
+    func sequenceHeader(at offset: Int) -> Int {
+        let index = line(at: offset)
+        var previous = index - 1
+        while previous >= 0 {
+            let text = lines[previous].text.trimmingCharacters(in: .whitespaces)
+            if text.isEmpty || text.hasPrefix("#") { previous -= 1; continue }
+            if lines[previous].indent < lines[index].indent && (text == "-" || text.hasPrefix("- #")) { return lines[previous].start + lines[previous].indent }
+            break
+        }
+        return offset
+    }
+    func blockBound(after header: Int, before upper: Int, protected: [NSRange]) -> Int {
+        let index = line(at: header), indent = lines[index].indent
+        for row in lines.dropFirst(index + 1) {
+            if row.start >= upper { break }
+            let trimmed = row.text.trimmingCharacters(in: .whitespaces)
+            if row.indent <= indent && !trimmed.isEmpty && !trimmed.hasPrefix("#") && !isProtected(row.start + row.indent, protected) { return row.start }
+        }
+        return upper
+    }
+    func mappingHeader(key: Int, value: Int) -> Int {
+        let valueLine = line(at: value), keyLine = line(at: key)
+        guard valueLine > keyLine else { return key }
+        let row = lines[valueLine]
+        let prefix = String(decoding: units[row.start..<value], as: UTF16.self)
+        if row.text.trimmingCharacters(in: .whitespaces).hasPrefix("*") && prefix.contains(":") { return row.start + row.indent }
+        var previous = valueLine - 1
+        while previous >= keyLine {
+            let text = lines[previous].text.trimmingCharacters(in: .whitespaces)
+            if text.isEmpty || text.hasPrefix("#") { previous -= 1; continue }
+            if lines[previous].indent < row.indent || (lines[previous].indent == row.indent && text.hasSuffix(":")) { return lines[previous].start + lines[previous].indent }
+            break
+        }
+        return key
+    }
 }
 
 extension Folding {
@@ -133,15 +168,19 @@ extension Folding {
         let parser = try Yams.Parser(yaml: text)
         var roots = [Node]()
         while let root = try parser.nextRoot() { roots.append(root) }
-        var protected = [NSRange](), scalarSeen = Set<Int>(), containers = Set<Int>()
+        func complexFirstKey(_ map: Node.Mapping, offset: Int) -> Bool {
+            guard let first = map.first?.key, source.offset(first.mark) == offset else { return false }
+            switch first { case .mapping, .sequence: return true; default: return false }
+        }
+        var protected = [NSRange](), scalarSeen = Set<Int>(), containers = Set<String>()
         func collect(_ node: Node) {
             guard let offset = source.offset(node.mark) else { return }
             switch node {
             case .mapping(let map):
-                guard containers.insert(offset).inserted else { return }
+                guard containers.insert("\(offset)-map-\(complexFirstKey(map, offset: offset))").inserted else { return }
                 for (key, value) in map { collect(key); collect(value) }
             case .sequence(let seq):
-                guard containers.insert(offset).inserted else { return }
+                guard containers.insert("\(offset)-sequence").inserted else { return }
                 for child in seq { collect(child) }
             case .scalar(let scalar):
                 guard scalarSeen.insert(offset).inserted else { return }
@@ -193,49 +232,57 @@ extension Folding {
                 s == marker || s.hasPrefix(marker + " ") || s.hasPrefix(marker + "\t")
             }
         }.map(\.start)
-        var result = [FoldRegion](), visited = Set<Int>()
+        var result = [FoldRegion](), visited = Set<String>()
         func visit(_ node: Node, header: Int?, upper: Int, depth: Int) {
-            guard let offset = source.offset(node.mark), offset < upper, !visited.contains(offset) else { return }
-            let children: [Node], kind: FoldRegion.Kind
+            guard let offset = source.offset(node.mark), offset < upper else { return }
+            let kind: FoldRegion.Kind, complexKey: Bool, count: Int
             switch node {
-            case .mapping(let map): children = map.flatMap { [$0.key, $0.value] }; kind = .mapping
-            case .sequence(let seq): children = Array(seq); kind = .sequence
+            case .mapping(let map): kind = .mapping; complexKey = complexFirstKey(map, offset: offset); count = map.count
+            case .sequence(let seq): kind = .sequence; complexKey = false; count = seq.count
             default: return
             }
-            guard !children.isEmpty, visited.insert(offset).inserted else { return }
+            guard count > 0 else { return }
             // Container styles on composed nodes need not retain the original
             // spelling. Inspect syntax at the parser's mark, after attributes.
-            let open = source.flowStart(at: offset, expected: kind == .mapping ? 123 : 91, before: upper)
+            let open = complexKey ? nil : source.flowStart(at: offset, expected: kind == .mapping ? 123 : 91, before: upper)
             let flow = open != nil
+            guard visited.insert("\(offset)-\(kind.rawValue)-\(flow)").inserted else { return }
+            let identity = offset * 2 + (flow ? 1 : 0)
             let end: Int
             if let open {
                 guard let close = source.flowEnd(open, before: upper, protected: protected) else { return }
                 end = close
-                result.append(FoldRegion(kind: kind, range: NSRange(open..<end), contentRange: NSRange((open + 1)..<(end - 1)), depth: depth, id: offset))
+                result.append(FoldRegion(kind: kind, range: NSRange(open..<end), contentRange: NSRange((open + 1)..<(end - 1)), depth: depth, id: identity))
             } else {
                 let start = header ?? offset
                 let row = source.lines[source.line(at: start)]
-                end = source.sectionEnd(before: upper, indent: row.indent, protected: scalarRanges)
-                let contentStart = header == nil || row.contentEnd >= end ? start : row.contentEnd
+                let bound = header.map { source.blockBound(after: $0, before: upper, protected: scalarRanges) } ?? upper
+                end = source.sectionEnd(before: bound, indent: row.indent, protected: scalarRanges)
+                let contentStart = header == nil || header == offset || row.contentEnd >= end ? start : row.contentEnd
                 guard end > contentStart else { return }
-                result.append(FoldRegion(kind: kind, range: NSRange(start..<end), contentRange: NSRange(contentStart..<end), depth: depth, id: offset))
+                result.append(FoldRegion(kind: kind, range: NSRange(start..<end), contentRange: NSRange(contentStart..<end), depth: depth, id: identity))
             }
             if case .mapping(let map) = node {
-                let pairs = Array(map).filter { (source.offset($0.key.mark) ?? -1) >= offset }
+                let pairs = Array(map).filter { max(source.offset($0.key.mark) ?? -1, source.offset($0.value.mark) ?? -1) >= offset }
                 for (index, pair) in pairs.enumerated() {
                     guard let key = source.offset(pair.key.mark), let value = source.offset(pair.value.mark), value >= key else { continue }
-                    let next = index + 1 < pairs.count ? source.offset(pairs[index + 1].key.mark) : nil
-                    let bound = next.map { source.lines[source.line(at: $0)].start } ?? upper
+                    let heading = source.mappingHeader(key: key, value: value)
+                    let next: Int? = index + 1 < pairs.count ? {
+                        guard let k = source.offset(pairs[index + 1].key.mark), let v = source.offset(pairs[index + 1].value.mark) else { return nil }
+                        return source.mappingHeader(key: k, value: v)
+                    }() : nil
+                    let bound = min(end, next.map { source.lines[source.line(at: $0)].start } ?? end)
                     visit(pair.key, header: nil, upper: value, depth: depth + 1)
-                    visit(pair.value, header: flow ? nil : key, upper: flow ? end : bound, depth: depth + 1)
+                    visit(pair.value, header: flow ? nil : heading, upper: flow ? end : bound, depth: depth + 1)
                 }
-            } else {
-                let items = children.filter { (source.offset($0.mark) ?? -1) >= offset }
-                for (index, item) in items.enumerated() {
+            } else if case .sequence(let sequence) = node {
+                let items = sequence.filter { (source.offset($0.mark) ?? -1) >= offset }
+                for item in items {
                     guard let position = source.offset(item.mark) else { continue }
-                    let next = index + 1 < items.count ? source.offset(items[index + 1].mark) : nil
-                    let bound = next.map { source.lines[source.line(at: $0)].start } ?? upper
-                    visit(item, header: flow ? nil : position, upper: flow ? end : bound, depth: depth + 1)
+                    // Yams resolves aliases to the anchor node/mark. Bound block
+                    // entries by physical indentation, not a resolved alias's
+                    // earlier mark, so an anchor never absorbs sibling aliases.
+                    visit(item, header: flow ? nil : source.sequenceHeader(at: position), upper: end, depth: depth + 1)
                 }
             }
         }

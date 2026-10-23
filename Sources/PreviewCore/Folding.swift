@@ -39,14 +39,16 @@ public struct FoldSession: Sendable {
     }
 
     /// Hiding an ancestor suppresses its descendants without resetting them.
-    /// Ordered structural regions are nested or disjoint, so one end is enough.
+    /// Some block headings contain structured keys. Keep controls in a retained
+    /// heading visible; only anchors inside hidden interiors are suppressed.
     public var visibleRegions: [FoldRegion] {
         var result = [FoldRegion]()
-        var hiddenUntil = 0
+        var hidden = [NSRange]()
         for region in regions {
-            guard region.range.location >= hiddenUntil else { continue }
+            hidden.removeAll { NSMaxRange($0) <= region.range.location }
+            guard !hidden.contains(where: { NSLocationInRange(region.range.location, $0) }) else { continue }
             result.append(region)
-            if collapsedIDs.contains(region.id) { hiddenUntil = NSMaxRange(region.range) }
+            if collapsedIDs.contains(region.id) { hidden.append(region.contentRange) }
         }
         return result
     }

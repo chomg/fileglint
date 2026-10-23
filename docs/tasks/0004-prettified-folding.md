@@ -71,6 +71,28 @@ left intact. Do not retry previously rejected generic Finder keyboard commands.
 Open the fixture preview manually and use precise product accessibility actions
 for the remaining checks. A PR must not be marked ready from component tests.
 
+## Physical YAML boundary correction and CI evidence
+
+Follow-up source review found that resolved block aliases could make an anchor
+absorb later sibling entries. Physical indentation now bounds those entries,
+including dash-only headers. Structured and alias keys retain distinct physical
+ranges/headings. Visibility follows hidden interiors, preserving any structured
+controls in a retained heading. Added regression coverage passes alongside the
+full suite: **55 tests in nine suites**, shared compilation, universal binaries
+and the real sandboxed launcher round trip. Final local report:
+`.git/ai-dev-harness/runs/20261023T024048Z-a8471a57/run.json`; log:
+`artifacts/issue2-physical-source-local.log`. Signed development build:
+`artifacts/issue2-physical-source-development.log`.
+
+The prior implementation commit `a752406` passed both hosted targets in
+[run 39888908711](https://github.com/chomg/fileglint/actions/runs/39888908711).
+Downloaded reports/logs establish all six steps, 54 tests, universal binaries,
+the real sandboxed launcher regression and three actual host UI tests with zero
+failures per architecture. Evidence: ignored `artifacts/issue2-ci-first/`.
+This is real host-sample evidence, not actual Finder acceptance, and the YAML
+correction requires its own hosted candidate evidence. Current validation status
+and the final PR link belong on the authoritative issue to avoid stale claims.
+
 ## Next executable step
 
 Complete the required hosted matrix for the implementation candidate. After

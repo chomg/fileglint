@@ -53,6 +53,14 @@ at the sibling indentation remain outside the previous fold, while more-indented
 interior comments and protected scalar lines stay attached. Stream separators
 and between-document comments are never folded into the preceding document.
 
+Resolved aliases do not supply their occurrence marks. Block entry boundaries
+therefore follow physical indentation rather than the next resolved node mark;
+an anchor's fold cannot absorb sibling alias entries. Alias keys recover their
+physical heading from the value's source position. A block mapping and its first
+structured key can share a start mark, so their range identities distinguish the
+source representation. Controls in a retained structured heading remain visible;
+only anchors within actually hidden interiors are suppressed.
+
 TOML protects strings/comments with the existing source lexer after validation.
 Bracket depth distinguishes headers from multiline array rows. TOMLKit decodes
 isolated header key paths, so quoted dots and escape spellings have the right

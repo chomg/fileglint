@@ -203,6 +203,31 @@ struct StructuredFoldingTests {
         #expect(tables.foldRegions.allSatisfy { $0.kind == .table })
     }
 
+    @Test func blockAnchorFoldsDoNotAbsorbAliasSiblingsAndComplexKeysKeepDistinctRanges() throws {
+        let block = try doc("- &a\n  name: one\n  nested:\n    items: [1, 2]\n# alias comment\n- *a\n-\n  name: two\n  extra: true\n", .yaml)
+        assertRanges(block)
+        let source = block.pretty! as NSString
+        let anchor = try #require(block.foldRegions.first { $0.kind == .mapping && source.substring(with: $0.range).hasPrefix("&a") })
+        #expect(!source.substring(with: anchor.range).contains("*a"))
+        #expect(!source.substring(with: anchor.range).contains("# alias comment"))
+        let second = try #require(block.foldRegions.first { $0.kind == .mapping && source.substring(with: $0.range).contains("name: two") })
+        #expect(source.substring(with: second.range).contains("extra: true"))
+        let complex = try doc("{key: '[not structure]'}: 1\nsibling: [2]\n", .yaml)
+        assertRanges(complex)
+        #expect(complex.foldRegions.filter { $0.kind == .mapping }.count == 2)
+        let spans = complex.foldRegions.map { (complex.pretty! as NSString).substring(with: $0.range) }
+        #expect(spans.contains("{key: '[not structure]'}"))
+        #expect(spans[0].contains("sibling:"))
+        var state = FoldSession(regions: complex.foldRegions)
+        let complexKey = try #require(complex.foldRegions.first { (complex.pretty! as NSString).substring(with: $0.range) == "{key: '[not structure]'}" })
+        state.toggle(complexKey.id)
+        let shown = FoldProjection(source: complex.pretty!, session: state)
+        #expect(shown.copiedText(in: NSRange(location: 0, length: (shown.string as NSString).length)) == complex.pretty)
+        let aliasedKey = try doc("name: &key old\nmap:\n  *key:\n    sub: [1, 2]\nsibling: 3\n", .yaml)
+        assertRanges(aliasedKey)
+        #expect(aliasedKey.foldRegions.contains { (aliasedKey.pretty! as NSString).substring(with: $0.range).hasPrefix("*key:") })
+    }
+
     @Test func projectionCopiesLogicalSelectionsAndNeverCopiesControlsOrMarkers() throws {
         let value = try doc("{\"first\":[1,2],\"last\":[3,4],\"literal\":\" … \u{fffc}\"}", .json)
         let source = value.pretty!
