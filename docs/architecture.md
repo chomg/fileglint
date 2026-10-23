@@ -19,6 +19,20 @@ PreviewDocument is an immutable-input value with Raw, optional Prettified and op
 
 Text is attributed native text, not evaluated code or HTML. No settings database, server, telemetry, network preview access, migrations or stored document cache exist. Dependencies are downloaded during setup only.
 
+Prettified folding follows [issue #2](https://github.com/chomg/fileglint/issues/2)
+and [RFC 0004](rfcs/0004-prettified-folding.md). PreviewCore supplies immutable
+formatted UTF-16 ranges for JSON containers, parsed YAML mappings/sequences and
+validated TOML tables/arrays. A transient FoldSession retains hidden child states;
+FoldProjection maps visible text, synthetic labels/controls and collapsed ranges
+to the complete source. FoldingTextView preserves attributed source text, adds
+inline native buttons only in the viewport and exports logical selections as
+plain source text, including hidden content. Mode/document changes replace the
+session. No formatting/source text is removed or persisted by folding.
+The buttons live beside the text view in NSClipView, so FoldingScrollView exposes
+them as independent accessibility contents rather than children of a text area.
+The text retains native selection and accessibility; UI attachment spaces are
+excluded from the accessibility hierarchy.
+
 ## Platform ownership
 
 Single macOS product, macOS 14+, arm64/x86_64. No cross-platform adapters are needed. Universal verification, signed development and UI-test artifacts have separate derived-data directories so test-injected entitlements cannot be mistaken for production sandbox behavior. Quick Look supplies temporary access to the requested file. The host and extension are sandboxed separately. Installing/enabling/routing an extension is macOS-owned; shared tests and the diagnostic sample cannot prove Finder integration.

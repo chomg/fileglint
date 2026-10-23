@@ -21,6 +21,7 @@ private final class Opener: FileOpening {
     }
 }
 
+extension AppKitTests {
 @Suite(.serialized) @MainActor
 struct OpenWithTests {
     init() { _ = NSApplication.shared }
@@ -164,4 +165,5 @@ struct OpenWithTests {
         #expect(controller.opening.buttons.isHidden)
         #expect(controller.opening.status.isHidden)
     }
+}
 }
