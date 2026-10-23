@@ -6,6 +6,8 @@ A native macOS Quick Look extension for JSON, YAML and TOML. Select a supported 
 
 This extends Finder Quick Look, not Apple Preview.app. Beside Raw/Prettified, Open with the default application opens the original file; its separate arrow lists compatible installed applications for a one-time choice. Default associations are unchanged. Quick Look's native Open action and Finder's Open With remain available.
 
+Keyboard access to the new Open controls in Finder requires macOS **Full Keyboard Access** under System Settings → Accessibility → Keyboard. With it off, ordinary Tab continues Finder file navigation; the controls remain available by mouse. Fileglint does not change this preference.
+
 ## Develop
 
 Requires macOS 14+, Swift 6.0+ and full Xcode for native app/extension builds. Dependency versions are locked. Read [development setup and verification](docs/development.md) for exact toolchains and supported targets.

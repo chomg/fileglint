@@ -1,6 +1,6 @@
 # RFC 0003 Application selection in previews
 
-Status: accepted placement; implementation in progress. Authoritative scope:
+Status: implemented; placement and keyboard behavior accepted. Authoritative scope:
 [issue #3](https://github.com/chomg/fileglint/issues/3). The user approved a
 separate split control to the right of Raw/Prettified on 2026-10-22.
 
@@ -18,6 +18,14 @@ No supported Quick Look extension API for modifying Finder's native Open button
 was found. Keep that OS action and place Fileglint's own control in the preview
 content header. Main button opens the current default; the separate arrow lists
 compatible apps. Samples have no source URL and omit opening controls.
+
+The user accepted the existing keyboard behavior on 2026-10-23 after confirming
+operation with macOS Full Keyboard Access enabled. In Finder, ordinary Tab with
+that feature off continues file navigation. Keep native accessible buttons and
+their key-view order, document this OS preference, and leave it under user
+control. Independent Tab entry without Full Keyboard Access is not required by
+the accepted scope. Internal first-responder/key-window experiments did not
+establish a supported host-to-extension handoff and are not included.
 
 ## Boundaries and flow
 

@@ -12,6 +12,8 @@ Install a small containing app, enable its Quick Look extension if macOS request
 
 The host app provides setup instructions and a sample preview to diagnose rendering independently of Finder registration. It is not a document editor. The user agreed to the Quick Look + minimal host app approach on 2026-10-21.
 
+In Finder, keyboard access to Fileglint's Open controls requires macOS Full Keyboard Access (System Settings → Accessibility → Keyboard). Without it, ordinary Tab continues Finder file navigation; mouse operation remains available. Fileglint leaves this preference to the user. This condition was accepted on 2026-10-23; it is separate from the Keyboard Navigation setting.
+
 ## Initial scope
 
 - Local UTF-8 files, including a leading UTF-8 BOM, up to 1 MiB. Prettification is available up to 128 KiB with nesting/indentation and a 4 MiB output cap; more complex files remain in Raw with an explanation.

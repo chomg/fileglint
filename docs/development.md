@@ -58,6 +58,15 @@ document URL in each target. Check arrow-only activation launches nothing,
 keyboard/Escape, both appearances, invalid Raw, navigation, and unchanged file
 hashes/default associations. Failures and unavailable apps/files must be visible.
 
+For keyboard-only access to the content-header Open controls in Finder, enable
+System Settings → Accessibility → Keyboard → Full Keyboard Access. Verify
+Tab/Shift-Tab navigation, Space activation and native menu arrow/Return/Escape
+operation. This is separate from Keyboard Navigation under Keyboard settings.
+With Full Keyboard Access off, ordinary Tab continues navigating Finder files;
+mouse operation remains available. The user accepted this behavior on 2026-10-23.
+Do not change the user's preference automatically or count AXPress as physical
+keyboard evidence.
+
 ## Command mappings
 
 The product was renamed to Fileglint on 2026-10-22; see [ADR 0002](decisions/0002-product-name.md). The workspace directory was renamed from `macos-previewer` to `/path/to/fileglint` on 2026-10-22 at the user's request. Open the new path in Codex/Xcode; older chat/file links and historical logs can still refer to the original path. Swift/Xcode caches may retain absolute paths; if a moved checkout fails with stale-path errors, preserve logs, then move the generated `.build` and `artifacts/*DerivedData` directories aside and rerun setup/build. Keep historical evidence. The filesystem rename does not rename a remote repository.
