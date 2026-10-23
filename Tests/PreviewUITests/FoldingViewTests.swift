@@ -133,11 +133,17 @@ struct FoldingViewTests {
         defer { window.orderOut(nil) }
         let view = controller.textView
         #expect(view.subviews.compactMap { $0 as? NSButton }.count < 100)
+        // TextKit attachment objects must not duplicate the native disclosure
+        // controls or expose thousands of off-screen accessibility children.
+        #expect((view.accessibilityChildren() ?? []).count < 100)
+        #expect(view.accessibilityValue() as? String == view.string)
         let last = try #require(document.foldRegions.last)
         let position = view.projection.displayOffset(forSourceOffset: last.range.location)
         view.setSelectedRange(NSRange(location: position, length: 0))
         view.scrollRangeToVisible(view.selectedRange()); layout(controller)
         #expect((try button(view, last.id)).frame.maxY <= view.bounds.maxY + 20)
+        #expect((view.accessibilityChildren() ?? []).count < 100)
+        #expect((view.accessibilityChildren() ?? []).contains { ($0 as? NSButton)?.tag == last.id })
         let collapse = try #require(NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [.command, .option], timestamp: 0, windowNumber: window.windowNumber, context: nil, characters: "", charactersIgnoringModifiers: "", isARepeat: false, keyCode: 123))
         view.keyDown(with: collapse)
         #expect(view.session.collapsedIDs.contains(last.id))

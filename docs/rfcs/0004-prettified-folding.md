@@ -36,6 +36,11 @@ at the cursor and Command-Option-Right expands it. Finder keyboard entry uses th
 same Full Keyboard Access setting as the existing Open controls. No global key
 monitor, focus stealing, Escape override or system preference change is added.
 
+Only these native buttons are accessibility children. TextKit's additional
+attachment objects represent presentation-only spaces and are excluded to avoid
+duplicate arrows and thousands of off-screen children. The text view retains
+its inherited accessible text value, selection and range operations.
+
 Fold state is an in-memory value for one Prettified session. A parent hides its
 descendants' controls without deleting their collapsed states. Reopening the
 parent restores those states. Loading a document or switching modes creates a

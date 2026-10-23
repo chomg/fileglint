@@ -88,13 +88,13 @@ public final class FoldingTextView: NSTextView {
     public override func layout() { super.layout(); updateDisclosureButtons() }
 
     public override func accessibilityChildren() -> [Any]? {
-        // Keep native text accessibility and explicitly expose inline controls.
-        var result = super.accessibilityChildren() ?? []
-        let controls = disclosureButtons.values.sorted {
+        // TextKit exposes every attachment as an additional AXUnknown child,
+        // including off-screen arrows. These are presentation-only spaces;
+        // expose each visible native button once. The text view keeps its
+        // inherited accessible text value, selection and range operations.
+        return disclosureButtons.values.sorted {
             $0.frame.minY == $1.frame.minY ? $0.frame.minX < $1.frame.minX : $0.frame.minY < $1.frame.minY
         }
-        for button in controls where !result.contains(where: { ($0 as? NSView) === button }) { result.append(button) }
-        return result
     }
 
     private func updateDisclosureButtons() {

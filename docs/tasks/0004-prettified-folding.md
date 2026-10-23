@@ -144,3 +144,35 @@ Create the issue's single PR after acceptance; do not merge it without authority
 
 The normal local scope and final required hosted matrix must be recorded for
 the eventual review candidate. Main/PR #5 CI does not validate this new slice.
+
+## Finder acceptance and bounded accessibility children
+
+After screen unlock, actual Finder Quick Look on macOS 27.0.1 arm64 exercised
+JSON, YAML, `.yml` and TOML native disclosure controls, retained child states,
+whole/partial logical copying, exact Raw, same-mode state retention and mode
+reset. YAML stream/sibling comment boundaries and exact expansion restoration
+passed. Invalid input and a valid 131,075-byte JSON document retained Raw,
+diagnostics and disabled Prettified without stale folds. Long Raw copying
+matched the source after correcting the diagnostic helper's pasteboard polling.
+These results concern candidate `227e1f5`, not a substitute for the correction below.
+
+The 2,000-array Finder journey revealed that TextKit exposed an additional
+AXUnknown child for every attachment, alongside the viewport's native buttons.
+A focused regression reproduced 2,011/2,010 accessibility children before/after
+scrolling. The text view now exposes only its visible native buttons as children;
+its inherited accessible text, selection and range operations remain intact.
+The regression now passes, including full accessible text equality, the final
+scrolled section, cursor folding and exact copying. Logs:
+`artifacts/issue2-accessibility-regression-before.log` (failed as expected) and
+`artifacts/issue2-accessibility-regression-after.log` (passed).
+
+Complete the normal local scope, signed development build and both required CI
+targets for this correction. Recheck Finder scrolling and all formats using the
+updated signed provider, verify array-of-table entries/rapid navigation and ask
+for physical keyboard/Escape acceptance. Record final results and the single PR
+on the authoritative issue; previous CI passes do not validate the new revision.
+
+The correction passed the complete local scope: 55 tests in nine suites,
+shared compilation, universal binaries and the real sandboxed launcher round
+trip (`20261023T045709Z-7102266e`; `artifacts/issue2-accessibility-local.log`).
+The signed development build passed (`artifacts/issue2-accessibility-development.log`).
