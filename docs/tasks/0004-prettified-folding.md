@@ -456,3 +456,18 @@ and native input behavior are unchanged. The focused test passed locally
 (`artifacts/issue2-gutter-raw-hit-regression.log`, one test/two suites).
 Run clean full local scope and a fresh hosted matrix at this corrected candidate;
 the failed report is preserved and is not relabeled as a pass.
+
+The first geometry correction was insufficient: [run 40272808504](https://github.com/chomg/fileglint/actions/runs/40272808504)
+still returned NSClipView for the left margin inside the visible Raw frame on
+macOS 15. The earlier outside-frame explanation alone therefore does not
+account for the native routing difference. Both failed runs are retained under
+`artifacts/issue2-gutter-ci-failed*/`; they are not passing evidence.
+
+The test now compares Raw's margin routing with an independent plain AppKit
+NSScrollView/NSTextView configured with the same text, insets and current
+geometry. It requires the product to match that native baseline, while still
+requiring complete gutter detachment, zero buttons, exact Raw text and the
+normal Raw inset. It does not prescribe an internal native hit-test class or
+accept an arbitrary overlay. The focused native-baseline regression passed
+locally (`artifacts/issue2-gutter-native-raw-routing.log`). Product code remains
+unchanged; clean full scope and actual hosted checks remain required.

@@ -259,7 +259,28 @@ struct FoldingViewTests {
         let rawArea = scroll.contentView.convert(view.bounds, from: view).intersection(scroll.contentView.bounds)
         #expect(!rawArea.isEmpty)
         let rawBlank = NSPoint(x: rawArea.minX + 1, y: rawArea.midY)
-        #expect(scroll.contentView.hitTest(scroll.contentView.convert(rawBlank, to: scroll.contentView.superview)) === view)
+        let rawHit = scroll.contentView.hitTest(scroll.contentView.convert(rawBlank, to: scroll.contentView.superview))
+        // Native AppKit versions differ in routing blank text margins to the
+        // text view or its clip view. Raw must match an independent native view.
+        let nativeText = NSTextView(frame: view.frame)
+        nativeText.isEditable = false; nativeText.isSelectable = true; nativeText.isRichText = false
+        nativeText.textContainerInset = view.textContainerInset
+        nativeText.textStorage?.setAttributedString(try #require(view.textStorage))
+        let nativeScroll = NSScrollView(frame: scroll.bounds)
+        nativeScroll.hasVerticalScroller = scroll.hasVerticalScroller
+        nativeScroll.documentView = nativeText
+        let nativeWindow = NSWindow(contentRect: scroll.bounds, styleMask: [], backing: .buffered, defer: false)
+        nativeWindow.isReleasedWhenClosed = false
+        nativeWindow.contentView = nativeScroll
+        defer { nativeWindow.orderOut(nil) }
+        nativeScroll.layoutSubtreeIfNeeded()
+        nativeScroll.contentView.frame = scroll.contentView.frame
+        nativeScroll.contentView.bounds = scroll.contentView.bounds
+        nativeText.frame = view.frame; nativeText.bounds = view.bounds
+        let nativeHit = nativeScroll.contentView.hitTest(nativeScroll.contentView.convert(rawBlank, to: nativeScroll.contentView.superview))
+        #expect(nativeHit === nativeText || nativeHit === nativeScroll.contentView)
+        #expect(rawHit === view || rawHit === scroll.contentView)
+        #expect((rawHit === view) == (nativeHit === nativeText))
         #expect(controls(view).isEmpty)
         #expect(view.string == document.raw)
     }
