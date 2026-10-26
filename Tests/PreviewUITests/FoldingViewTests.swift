@@ -262,7 +262,10 @@ struct FoldingViewTests {
         let rawHit = scroll.contentView.hitTest(scroll.contentView.convert(rawBlank, to: scroll.contentView.superview))
         // Native AppKit versions differ in routing blank text margins to the
         // text view or its clip view. Raw must match an independent native view.
-        let nativeText = NSTextView(frame: view.frame)
+        #expect(view.textLayoutManager == nil)
+        let nativeText = NSTextView(usingTextLayoutManager: false)
+        nativeText.frame = view.frame
+        #expect(nativeText.textLayoutManager == nil)
         nativeText.isEditable = false; nativeText.isSelectable = true; nativeText.isRichText = false
         nativeText.textContainerInset = view.textContainerInset
         nativeText.textStorage?.setAttributedString(try #require(view.textStorage))
@@ -280,7 +283,8 @@ struct FoldingViewTests {
         let nativeHit = nativeScroll.contentView.hitTest(nativeScroll.contentView.convert(rawBlank, to: nativeScroll.contentView.superview))
         #expect(nativeHit === nativeText || nativeHit === nativeScroll.contentView)
         #expect(rawHit === view || rawHit === scroll.contentView)
-        #expect((rawHit === view) == (nativeHit === nativeText))
+        #expect((rawHit === view) == (nativeHit === nativeText),
+                "Raw/native legacy text routing at \(rawBlank): \(String(describing: rawHit)) / \(String(describing: nativeHit))")
         #expect(controls(view).isEmpty)
         #expect(view.string == document.raw)
     }

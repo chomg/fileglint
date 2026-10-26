@@ -471,3 +471,14 @@ normal Raw inset. It does not prescribe an internal native hit-test class or
 accept an arbitrary overlay. The focused native-baseline regression passed
 locally (`artifacts/issue2-gutter-native-raw-routing.log`). Product code remains
 unchanged; clean full scope and actual hosted checks remain required.
+
+The independent comparison in [run 40273460259](https://github.com/chomg/fileglint/actions/runs/40273460259)
+still differed on both targets. Its default NSTextView used TextKit 2, while
+the product's NSLayoutManager access uses TextKit 1. A local owned-view probe
+confirms default → legacy fallback and explicit legacy construction
+(`artifacts/issue2-native-text-engine-probe.log`). The comparison now explicitly
+initializes TextKit 1 and asserts both views use the same engine. Apple documents
+this fallback in [What's new in TextKit and text views](https://developer.apple.com/videos/play/wwdc2022/10090/).
+The matched-engine focused test passed locally; the hosted result is still
+required before attributing the observed hit-test difference to that mismatch.
+The third failed reports remain in `artifacts/issue2-gutter-ci-native-failed/`.
