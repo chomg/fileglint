@@ -50,8 +50,13 @@ an exterior focus ring.
 With text focused, Command-Option-Left/Right collapse/expand the section at the
 cursor. Finder keyboard entry uses the user-controlled Full Keyboard Access
 setting, as with the existing Open controls. No global key monitor, focus
-stealing, Escape override or system preference change is added. Physical Finder
-keyboard acceptance must be repeated for the gutter candidate.
+stealing, Escape override or system preference change is added. Native click
+sequences remain native, including two actions for a double-click; no arbitrary
+timing filter or repeated-click suppression is added. The user accepted this
+choice on 2026-10-26 after the tested Mac's Full Keyboard Access converted rapid
+Space presses into double-click sequences in both plain native and actual
+folding controls. Physical Finder results and the host-specific diagnostic
+limit are recorded in the [handoff](../tasks/0004-prettified-folding.md).
 
 Fold state is an in-memory value for one Prettified session. A parent hides its
 descendants' controls without deleting their collapsed states. Reopening the

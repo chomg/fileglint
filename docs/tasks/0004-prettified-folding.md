@@ -378,3 +378,60 @@ the exact expanded document, focus and complete copying. Ten pairs passed
 producing two toggles from one actual press producing duplicate activations.
 Do not call a return to the original state after two toggles a lost input, or
 claim the physical report resolved before that clarification.
+
+## Single-press duplication clarification — 2026-10-26
+
+The user clarified the physical report: **one short Space press can produce two
+counter increments**, rather than two deliberate presses producing two toggles.
+The prior descriptions of rapid actions being missed are superseded by this
+clarification. Every delivered action toggles correctly, but that does not
+establish one action per physical press. This remains a material acceptance
+question; do not mark rapid physical keyboard behavior resolved.
+
+The isolated actual-module probe now also includes an unchanged plain native
+checkbox. Only its own window's Space down/up metadata (no text or global input)
+and button action call stacks are recorded, to distinguish native keyboard and
+accessibility activation routes. The product sources and system preferences
+are unchanged. Physical comparison is pending in the new diagnostic session;
+log: `artifacts/issue2-real-folding-route-probe.jsonl`.
+
+Clean committed local verification passed at `4714d40`:
+`20261026T044645Z-0e0fb9b7` records clean starting/ending states and all four
+steps passing, including **62 tests in nine suites**, shared compilation,
+universal host/extension/launcher binaries and the real sandboxed launcher
+round trip. Log: `artifacts/issue2-gutter-committed-local.log`.
+Hosted checks and PR #6's gutter update remain pending the physical finding.
+
+The window-scoped mouse-route comparison completed. The user confirmed that
+rapid individual Space presses still increment by two. The diagnostic recorded
+36 native checkbox actions (8 accessibility presses, 28 mouse-gesture actions)
+and 44 real-module fold actions (12 accessibility presses, 32 mouse-gesture
+actions). Its 120 mouse events form 60 complete down/up clicks, in 30 successive
+pairs of `clickCount` 1 then 2. The fast pairs therefore arrive as double-click
+sequences, with both clicks invoking the native button. Every real fold action
+was forwarded and changed state once. No raw Space event reached the window.
+Evidence: `artifacts/issue2-real-folding-mouse-route-probe.jsonl` and
+`issue2-mouse-action-route-audit.json`. An isolated default-action-mask check
+also found both native button styles use mouse-up only and are not continuous.
+
+This bounds the observed duplication to the input path in the tested Mac
+rather than an extra toggle inside the folding handler; it does not establish
+an inherent restriction on every OS/version. The user has been asked whether
+to retain native behavior and document the finding, or treat a double-click
+sequence as one fold activation. The latter also changes actual mouse
+semantics and is a consequential product choice; no arbitrary time debounce
+or speculative product change has been introduced while that choice is pending.
+
+
+## Accepted native activation behavior — 2026-10-26
+
+The user selected **retain default macOS behavior** after reviewing the
+window-scoped double-click evidence. The material product decision is resolved:
+keep native actions without a timing filter, second-click suppression or system
+preference changes. The physical quick-input report is recorded as an accepted
+host-specific behavior, not a fixed OS bug or a universally reproduced limit.
+Ordinary Finder keyboard entry/repeated activation and Escape passed. Both the
+final clean local scope and hosted matrix must cover the publication candidate;
+PR #6 must include this limit alongside the completed gutter/Finder evidence.
+The task-owned diagnostic is closed after retaining its logs. No unrelated app
+or Finder process is terminated.

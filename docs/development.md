@@ -88,6 +88,15 @@ Escape handling is unchanged. For all formats, verify child-state restoration,
 comment boundaries, wrapping/scrolling, partial/full copying, mode/document reset
 and source bytes in the actual host and Finder, separately from component tests.
 
+On the validated macOS 27.0.1 arm64 host, rapid individual Space presses with
+Full Keyboard Access arrived as double-click sequences, producing two native
+actions in both a plain macOS checkbox and the actual folding module. Two
+fold actions return the section to its starting state; ordinary spaced presses
+work normally. The user accepted retaining native behavior on 2026-10-26.
+No timing filter or double-click suppression is applied. This observation is
+specific to the tested host; it is not a claim about every macOS version.
+The diagnostic evidence and physical Finder results are in the issue handoff.
+
 The AppKit component suites share a serial parent and use owned off-screen
 windows. `FILEGLINT_CAPTURE_FOLDING=1 uv run --script scripts/dev.py test` writes
 synthetic view renders and expected fixture text under `artifacts/issue2-visuals/`;
