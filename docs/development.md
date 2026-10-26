@@ -67,6 +67,44 @@ mouse operation remains available. The user accepted this behavior on 2026-10-23
 Do not change the user's preference automatically or count AXPress as physical
 keyboard evidence.
 
+## Prettified folding development
+
+`Fixtures/folding.json`, `.yaml` and `.toml` exercise nested containers, sibling
+comments, literal strings, YAML streams/aliases and TOML array-of-table entries.
+The host's JSON/YAML/TOML samples also use the actual disclosure implementation.
+Raw has no folding controls. Switching modes/files creates an expanded session.
+Copy includes hidden source when a selection crosses a fold; Select All → Copy
+must equal the complete formatted text, excluding controls and synthetic labels.
+
+Native buttons in a fixed left gutter expose section/line names and expanded
+state. Expanded text equals the formatted source; no synthetic document headers
+or inline attachment spaces are inserted. One arrow represents the outermost
+container beginning on a logical line, on its first wrapped display row.
+Implicit YAML document roots have no arrow; explicit root containers remain
+foldable. The gutter is absent in Raw and excluded from text selection/copy. Finder
+keyboard entry uses Full Keyboard Access; in focused text, Command-Option-Left
+collapses the section at the cursor and Command-Option-Right expands it. Native
+Escape handling is unchanged. For all formats, verify child-state restoration,
+comment boundaries, wrapping/scrolling, partial/full copying, mode/document reset
+and source bytes in the actual host and Finder, separately from component tests.
+
+On the validated macOS 27.0.1 arm64 host, rapid individual Space presses with
+Full Keyboard Access arrived as double-click sequences, producing two native
+actions in both a plain macOS checkbox and the actual folding module. Two
+fold actions return the section to its starting state; ordinary spaced presses
+work normally. The user accepted retaining native behavior on 2026-10-26.
+No timing filter or double-click suppression is applied. This observation is
+specific to the tested host; it is not a claim about every macOS version.
+The diagnostic evidence and physical Finder results are in the issue handoff.
+
+The AppKit component suites share a serial parent and use owned off-screen
+windows. `FILEGLINT_CAPTURE_FOLDING=1 uv run --script scripts/dev.py test` writes
+synthetic view renders and expected fixture text under `artifacts/issue2-visuals/`;
+it does not capture the screen or other apps. These images establish component
+layout only. The test command requires a complete passing Swift Testing summary
+as well as a zero exit code. See [RFC 0004](rfcs/0004-prettified-folding.md) and
+the [issue #2 handoff](tasks/0004-prettified-folding.md).
+
 ## Command mappings
 
 The product was renamed to Fileglint on 2026-10-22; see [ADR 0002](decisions/0002-product-name.md). The workspace directory was renamed from `macos-previewer` to `/path/to/fileglint` on 2026-10-22 at the user's request. Open the new path in Codex/Xcode; older chat/file links and historical logs can still refer to the original path. Swift/Xcode caches may retain absolute paths; if a moved checkout fails with stale-path errors, preserve logs, then move the generated `.build` and `artifacts/*DerivedData` directories aside and rerun setup/build. Keep historical evidence. The filesystem rename does not rename a remote repository.

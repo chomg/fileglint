@@ -8,6 +8,8 @@ This extends Finder Quick Look, not Apple Preview.app. Beside Raw/Prettified, Op
 
 Keyboard access to the new Open controls in Finder requires macOS **Full Keyboard Access** under System Settings → Accessibility → Keyboard. With it off, ordinary Tab continues Finder file navigation; the controls remain available by mouse. Fileglint does not change this preference.
 
+In **Prettified**, use the disclosure arrows in the left gutter to fold JSON objects/arrays, YAML mappings/sequences, or TOML tables and arrays. Child fold states survive closing/reopening a parent; changing mode or file resets them. **Copy includes hidden content** when a selection crosses a fold; Select All → Copy returns the complete formatted text and comments, excluding controls and labels. With the text focused, ⌘⌥← collapses the section at the cursor and ⌘⌥→ expands it. Finder keyboard entry uses Full Keyboard Access as described above. Raw stays unchanged.
+
 ## Develop
 
 Requires macOS 14+, Swift 6.0+ and full Xcode for native app/extension builds. Dependency versions are locked. Read [development setup and verification](docs/development.md) for exact toolchains and supported targets.

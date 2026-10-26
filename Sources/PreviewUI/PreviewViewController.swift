@@ -4,10 +4,11 @@ import PreviewCore
 @MainActor
 public final class PreviewViewController: NSViewController {
     public let mode = NSSegmentedControl(labels: ["Raw", "Prettified"], trackingMode: .selectOne, target: nil, action: nil)
-    public let textView = NSTextView()
+    public let textView = FoldingTextView()
     public let status = NSTextField(wrappingLabelWithString: "Choose a file in Finder and press Space.")
     public let opening = OpenWithController()
     private var document: PreviewDocument?
+    private var displayedMode: Int?
 
     public override func loadView() {
         view = NSView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
@@ -27,7 +28,7 @@ public final class PreviewViewController: NSViewController {
         textView.isHorizontallyResizable = false
         textView.textContainer?.widthTracksTextView = true
         textView.setAccessibilityIdentifier("preview-content")
-        let scroll = NSScrollView()
+        let scroll = FoldingScrollView()
         scroll.hasVerticalScroller = true
         scroll.documentView = textView
         status.setAccessibilityIdentifier("preview-status")
@@ -38,6 +39,7 @@ public final class PreviewViewController: NSViewController {
         header.spacing = 8
         mode.nextKeyView = opening.mainButton
         opening.menuButton.nextKeyView = textView
+        textView.afterDisclosures = mode
         let stack = NSStackView(views: [header, status, opening.status, scroll])
         stack.orientation = .vertical
         stack.alignment = .leading
@@ -58,6 +60,7 @@ public final class PreviewViewController: NSViewController {
 
     public func display(_ result: Result<PreviewDocument, Error>, sourceURL: URL? = nil) {
         loadViewIfNeeded()
+        displayedMode = nil
         mode.selectedSegment = 0
         opening.setSource(sourceURL)
         switch result {
@@ -65,11 +68,9 @@ public final class PreviewViewController: NSViewController {
             self.document = document
             mode.setEnabled(true, forSegment: 0)
             mode.setEnabled(document.pretty != nil, forSegment: 1)
-            let explanation = document.format == .json ? "Prettified changes spacing only." : "Prettified preserves comments; spacing may change."
-            status.stringValue = document.formattingError ?? "\(document.format.rawValue.uppercased()) · Read only · \(explanation)"
         case .failure(let error):
             document = nil
-            textView.string = ""
+            textView.setDocument(NSAttributedString(string: ""), regions: [])
             mode.setEnabled(false, forSegment: 0)
             mode.setEnabled(false, forSegment: 1)
             status.stringValue = error.localizedDescription
@@ -79,6 +80,11 @@ public final class PreviewViewController: NSViewController {
 
     @objc public func updateDisplayedMode() {
         guard let document else { return }
+        guard displayedMode != mode.selectedSegment else { return }
+        displayedMode = mode.selectedSegment
+        let explanation = document.format == .json ? "Prettified changes spacing only." : "Prettified preserves comments; spacing may change."
+        let folding = mode.selectedSegment == 1 && !document.foldRegions.isEmpty ? " Fold sections with the arrows; Copy includes hidden text." : ""
+        status.stringValue = document.formattingError ?? "\(document.format.rawValue.uppercased()) · Read only · \(explanation)\(folding)"
         let source = mode.selectedSegment == 1 ? (document.pretty ?? document.raw) : document.raw
         let full = NSRange(location: 0, length: (source as NSString).length)
         let result = NSMutableAttributedString(string: source, attributes: [
@@ -96,7 +102,7 @@ public final class PreviewViewController: NSViewController {
             }
             result.addAttribute(.foregroundColor, value: color, range: token.range)
         }
-        textView.textStorage?.setAttributedString(result)
+        textView.setDocument(result, regions: mode.selectedSegment == 1 ? document.foldRegions : [], showsGutter: mode.selectedSegment == 1)
         textView.setSelectedRange(NSRange(location: 0, length: 0))
         if full.length > 0 { textView.scrollRangeToVisible(NSRange(location: 0, length: 0)) }
     }

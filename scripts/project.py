@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import platform
+import re
 import plistlib
 import shutil
 import subprocess
@@ -38,7 +39,23 @@ def swift(action, *args):
                 '-Xswiftc', '-load-plugin-library', '-Xswiftc', str(plugin),
                 '-Xlinker', '-F', '-Xlinker', str(frameworks),
                 '-Xlinker', '-rpath', '-Xlinker', str(frameworks))
-    run('swift', action, '--build-system', 'native', '--cache-path', '.build/cache', '--scratch-path', '.build', *args)
+    command = ('swift', action, '--build-system', 'native', '--cache-path', '.build/cache', '--scratch-path', '.build', *args)
+    if action != 'test':
+        run(*command)
+        return
+    # Native AppKit setup can end a command-line test process with status zero
+    # before Swift Testing finishes. Require its actual aggregate result too.
+    complete = False
+    with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1) as process:
+        for line in process.stdout:
+            print(line, end='', flush=True)
+            match = re.search(r'Test run with ([1-9][0-9]*) tests? (?:in [1-9][0-9]* suites? )?passed\b', line)
+            complete = complete or match is not None
+        code = process.wait()
+    if code:
+        raise subprocess.CalledProcessError(code, command)
+    if not complete:
+        sys.exit('Swift Testing ended without a complete passing aggregate result; this is not a passed suite.')
 
 
 def require_xcode():

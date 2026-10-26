@@ -3,6 +3,7 @@ import Testing
 import PreviewCore
 @testable import PreviewUI
 
+extension AppKitTests {
 struct PreviewViewTests {
     @Test @MainActor func testRealControlsSwitchAndClearStaleContent() throws {
         _ = NSApplication.shared
@@ -16,7 +17,7 @@ struct PreviewViewTests {
         #expect(controller.mode.isEnabled(forSegment: 1))
         controller.mode.selectedSegment = 1
         #expect(controller.mode.sendAction(controller.mode.action!, to: controller.mode.target))
-        #expect(controller.textView.string == document.pretty)
+        #expect(controller.textView.projection.copiedText(in: NSRange(location: 0, length: (controller.textView.string as NSString).length)) == document.pretty)
         controller.mode.selectedSegment = 0
         #expect(controller.mode.sendAction(controller.mode.action!, to: controller.mode.target))
         #expect(controller.textView.string == raw)
@@ -52,14 +53,14 @@ struct PreviewViewTests {
                 controller.mode.selectedSegment = 1
                 #expect(controller.mode.sendAction(controller.mode.action!, to: controller.mode.target))
                 let formatted = try #require(document.pretty)
-                #expect(controller.textView.string == formatted)
+                #expect(controller.textView.projection.source == formatted)
                 #expect(controller.textView.isSelectable && !controller.textView.isEditable)
-                let comment = (formatted as NSString).range(of: "# note")
+                let comment = (controller.textView.string as NSString).range(of: "# note")
                 #expect(controller.textView.textStorage?.attribute(.foregroundColor, at: comment.location, effectiveRange: nil) as? NSColor == .secondaryLabelColor)
                 #expect(controller.status.stringValue.contains("preserves comments"))
                 let pasteboard = NSPasteboard.withUniqueName()
                 defer { pasteboard.releaseGlobally() }
-                controller.textView.setSelectedRange(NSRange(location: 0, length: (formatted as NSString).length))
+                controller.textView.selectAll(nil)
                 let types = controller.textView.writablePasteboardTypes
                 #expect(!types.isEmpty)
                 #expect(controller.textView.writeSelection(to: pasteboard, types: types))
@@ -70,4 +71,5 @@ struct PreviewViewTests {
             }
         }
     }
+}
 }

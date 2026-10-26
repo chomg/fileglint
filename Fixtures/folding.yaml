@@ -1,0 +1,18 @@
+# Folding validation
+settings: &settings
+  # Interior settings comment
+  enabled: true
+  nested:
+    items: [1, 2, 3]
+# Sibling comment
+sibling:
+  literal: |-
+    # Scalar data, not a comment
+    [not, a, sequence]
+  quoted: "brackets [ ] and { }"
+copy: *settings
+...
+# Between documents
+---
+second:
+  items: [4, 5]

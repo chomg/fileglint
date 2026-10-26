@@ -1,0 +1,19 @@
+# Folding validation
+[settings]
+# Interior settings comment
+enabled = true
+[settings.nested]
+items = [1, 2, 3]
+# Sibling comment
+[sibling]
+literal = '''
+# Scalar data, not a comment
+[not, a, sequence]
+'''
+quoted = "brackets [ ] and { }"
+# First entry comment
+[[tools]]
+name = "one"
+# Second entry comment
+[[tools]]
+name = "two"
