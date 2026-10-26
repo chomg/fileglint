@@ -247,12 +247,20 @@ struct FoldingViewTests {
         let blank = NSPoint(x: 1, y: scroll.contentView.bounds.maxY - 2)
         let hit = try #require(scroll.contentView.hitTest(scroll.contentView.convert(blank, to: scroll.contentView.superview)))
         #expect(hit !== view && !(hit is NSButton))
+        #expect(hit !== scroll.contentView && hit.superview === scroll.contentView)
         let event = try #require(NSEvent.mouseEvent(with: .leftMouseDown, location: hit.convert(.zero, to: nil), modifierFlags: [], timestamp: 0, windowNumber: window.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: 1))
         hit.mouseDown(with: event)
         #expect(view.selectedRange() == selection)
         controller.mode.selectedSegment = 0; controller.updateDisplayedMode(); layout(controller)
         #expect(view.textContainerInset.width == 14)
-        #expect(scroll.contentView.hitTest(scroll.contentView.convert(blank, to: scroll.contentView.superview)) === view)
+        #expect(hit.superview == nil)
+        // Raw can have a shorter native document view than Prettified. Test
+        // its left edge inside the current text area, not the old bottom point.
+        let rawArea = scroll.contentView.convert(view.bounds, from: view).intersection(scroll.contentView.bounds)
+        #expect(!rawArea.isEmpty)
+        let rawBlank = NSPoint(x: rawArea.minX + 1, y: rawArea.midY)
+        #expect(scroll.contentView.hitTest(scroll.contentView.convert(rawBlank, to: scroll.contentView.superview)) === view)
+        #expect(controls(view).isEmpty)
         #expect(view.string == document.raw)
     }
 

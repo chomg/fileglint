@@ -435,3 +435,24 @@ final clean local scope and hosted matrix must cover the publication candidate;
 PR #6 must include this limit alongside the completed gutter/Finder evidence.
 The task-owned diagnostic is closed after retaining its logs. No unrelated app
 or Finder process is terminated.
+
+## macOS 15 Raw hit-test correction
+
+The final documentation candidate `f115f34` passed clean local scope
+(`20261026T050418Z-b2987a70`, 62 tests), then automatic PR
+[run 40272361495](https://github.com/chomg/fileglint/actions/runs/40272361495)
+failed the arm64 component suite on macOS 15.7.9 / Xcode 26.0.1. The retained
+report `20261026T050533Z-b3de9b73` and `03.log` identify exactly one assertion:
+`gutterStaysOnFirstWrappedRowAndRejectsTextSelection` reused a bottom-of-viewport
+Prettified coordinate after switching to a shorter Raw document view. Hit testing
+correctly returned NSClipView outside the Raw text view's actual frame.
+Evidence: ignored `artifacts/issue2-gutter-ci-failed/arm64/`.
+
+The regression now tests Raw's left edge inside the current visible text area.
+It additionally requires that the previous gutter view was an independent clip
+child, is detached after switching to Raw, and no disclosure buttons remain.
+Expanded text/copy and Raw inset/content assertions are retained. Product code
+and native input behavior are unchanged. The focused test passed locally
+(`artifacts/issue2-gutter-raw-hit-regression.log`, one test/two suites).
+Run clean full local scope and a fresh hosted matrix at this corrected candidate;
+the failed report is preserved and is not relabeled as a pass.
