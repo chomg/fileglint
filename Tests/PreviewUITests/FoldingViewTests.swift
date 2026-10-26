@@ -182,5 +182,122 @@ struct FoldingViewTests {
         #expect(view.session.collapsedIDs.contains(last.id))
         view.selectAll(nil); #expect(try copy(view) == document.pretty)
     }
+
+    @Test func gutterKeepsExpandedSourceExactAndControlsInOneLeftColumn() throws {
+        for (format, source) in [(DocumentFormat.json, #"{"section":{"items":[1,2]},"sibling":[3]}"#),
+                                 (.yaml, "# heading\nsection:\n  items: [1,2]\nsibling: [3]\n"),
+                                 (.toml, "[section]\nitems=[1,2]\n[sibling]\nitems=[3]\n")] {
+            let (controller, document, window) = try show(source, format: format)
+            defer { window.orderOut(nil) }
+            let view = controller.textView
+            #expect(view.string == document.pretty)
+            let buttons = controls(view)
+            #expect(!buttons.isEmpty)
+            #expect(Set(buttons.map { $0.frame.minX }).count == 1)
+            for control in buttons {
+                #expect(control.frame.minX >= 0 && control.frame.maxX < view.textContainerOrigin.x)
+                #expect(control.accessibilityLabel()?.contains("document ") == false)
+            }
+            #expect(!view.string.contains("\u{fffc}"))
+            if format == .yaml {
+                #expect(!view.string.contains("Mapping"))
+                #expect(buttons.count == 3)
+            }
+            view.selectAll(nil); #expect(try copy(view) == document.pretty)
+        }
+    }
+
+    @Test func gutterUsesOutermostContainerPerSourceLine() throws {
+        let (controller, document, window) = try show("items: [{a: [1,2]}, [3,4]]\nsibling: [5]\n", format: .yaml)
+        defer { window.orderOut(nil) }
+        let view = controller.textView
+        let buttons = controls(view)
+        #expect(buttons.count == 2)
+        let first = try #require(buttons.first { $0.accessibilityLabel()?.contains("items:") == true })
+        first.performClick(nil); layout(controller)
+        #expect(view.string.contains("items: [ … ]"))
+        #expect(view.string.contains("sibling: [5]"))
+        view.selectAll(nil); #expect(try copy(view) == document.pretty)
+        first.performClick(nil); layout(controller)
+        #expect(view.string == document.pretty)
+    }
+
+    @Test func gutterStaysOnFirstWrappedRowAndRejectsTextSelection() throws {
+        let key = String(repeating: "long_key_", count: 18)
+        let (controller, document, window) = try show("\(key): [1,2]\nnext: [3]\n", format: .yaml)
+        defer { window.orderOut(nil) }
+        let view = controller.textView
+        let scroll = try #require(view.enclosingScrollView)
+        let control = try #require(controls(view).first { $0.accessibilityLabel()?.contains("line 1:") == true })
+        let x = control.frame.minX
+        for width in [420.0, 800.0] {
+            window.setContentSize(NSSize(width: width, height: 500)); layout(controller)
+            let manager = try #require(view.layoutManager)
+            let firstRow = manager.lineFragmentRect(forGlyphAt: 0, effectiveRange: nil)
+            let arrayStart = (view.string as NSString).range(of: "[").location
+            let arrayRow = manager.lineFragmentRect(forGlyphAt: manager.glyphIndexForCharacter(at: arrayStart), effectiveRange: nil)
+            #expect(arrayRow.minY > firstRow.minY)
+            #expect(abs(control.frame.minY - (firstRow.minY + view.textContainerOrigin.y)) < 1)
+            #expect(control.frame.minX == x)
+            #expect(Set(controls(view).map { $0.frame.minY }).count == controls(view).count)
+            #expect(view.string == document.pretty)
+        }
+        let selection = NSRange(location: 5, length: 8)
+        view.setSelectedRange(selection)
+        let blank = NSPoint(x: 1, y: scroll.contentView.bounds.maxY - 2)
+        let hit = try #require(scroll.contentView.hitTest(scroll.contentView.convert(blank, to: scroll.contentView.superview)))
+        #expect(hit !== view && !(hit is NSButton))
+        let event = try #require(NSEvent.mouseEvent(with: .leftMouseDown, location: hit.convert(.zero, to: nil), modifierFlags: [], timestamp: 0, windowNumber: window.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: 1))
+        hit.mouseDown(with: event)
+        #expect(view.selectedRange() == selection)
+        controller.mode.selectedSegment = 0; controller.updateDisplayedMode(); layout(controller)
+        #expect(view.textContainerInset.width == 14)
+        #expect(scroll.contentView.hitTest(scroll.contentView.convert(blank, to: scroll.contentView.superview)) === view)
+        #expect(view.string == document.raw)
+    }
+
+    @Test func repeatedGutterActivationKeepsTheSameFocusedButton() throws {
+        let source = "settings:\n  nested:\n    items: [1,2,3]\nsibling:\n  nested:\n    items: [4,5]\nlast:\n  value: true\n"
+        let (controller, document, window) = try show(source, format: .yaml)
+        defer { window.orderOut(nil) }
+        let view = controller.textView
+        let ids = controls(view).map(\.tag)
+        for id in ids {
+            let control = try button(view, id)
+            let accessible = try #require(NSAccessibility.unignoredDescendant(of: control)) as AnyObject
+            #expect(window.makeFirstResponder(control))
+            for iteration in 0..<6 {
+                control.performClick(nil)
+                layout(controller)
+                RunLoop.current.run(until: Date().addingTimeInterval(0.02))
+                #expect((try button(view, id)) === control)
+                #expect(NSAccessibility.unignoredDescendant(of: control) as AnyObject? === accessible)
+                #expect(window.firstResponder === control)
+                #expect(view.session.collapsedIDs.contains(id) == (iteration % 2 == 0))
+            }
+            #expect(view.string == document.pretty)
+        }
+    }
+
+    @Test func twoImmediateNativeActionsRestoreTheExpandedDocument() throws {
+        let (controller, document, window) = try show("settings:\n  nested:\n    items: [1,2,3]\nsibling: [4]\n", format: .yaml)
+        defer { window.orderOut(nil) }
+        let view = controller.textView
+        let control = try #require(controls(view).first { $0.accessibilityLabel()?.contains("settings:") == true })
+        let action = try #require(control.action)
+        #expect(window.makeFirstResponder(control))
+        for _ in 0..<10 {
+            // No sleep, animation, layout pass or event-loop turn between the
+            // actions: two activations must toggle twice, ending where they began.
+            #expect(control.sendAction(action, to: control.target))
+            #expect(view.session.collapsedIDs.contains(control.tag))
+            #expect(view.string.contains("…"))
+            #expect(control.sendAction(action, to: control.target))
+            #expect(view.session.collapsedIDs.isEmpty)
+            #expect(view.string == document.pretty)
+            #expect(window.firstResponder === control)
+        }
+        view.selectAll(nil); #expect(try copy(view) == document.pretty)
+    }
 }
 }

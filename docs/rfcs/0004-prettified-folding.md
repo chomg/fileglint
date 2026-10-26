@@ -14,38 +14,44 @@ and representation within one document; they are not persistent identities.
 Ranges are created only after successful bounded
 formatting and refer to that exact formatted string, not Raw offsets.
 
-PreviewUI owns disclosure controls, focus and layout. FoldProjection retains
-explicit mappings from displayed spans to complete formatted source. The chosen
-presentation inserts attachment spaces with native NSButton overlays and replaces
-collapsed interiors with an ellipsis. Root block YAML uses a synthetic Mapping or
-Sequence heading to distinguish document and first-child controls. Copying a
-logical selection across a placeholder includes its complete hidden source, and
-Select All copies the complete document. Labels and attachment spaces have no
-copied source. Literal source ellipses/object-replacement characters are ordinary
-source spans and are never removed by a text-search replacement rule.
+PreviewUI owns a narrow, fixed left gutter with native NSButton disclosures.
+It shares the document's vertical scroll position and has no line numbers.
+Expanded display text is exactly the complete formatted source: no inline
+attachments, synthetic Mapping/Sequence headings, padding or labels are inserted.
+Collapsed interiors are replaced with an ellipsis. FoldProjection maps visible
+source and placeholders to the immutable full text, so copying across a
+placeholder includes all hidden content/comments and Select All copies the full
+formatted document. Literal ellipses/object-replacement characters remain data.
 
-Controls follow a block heading or opening delimiter so they do not shift keys
-or data indentation. Whole block containers receive a synthetic type heading;
-compact sequence entries preserve the original column on the next display line.
-All added heading text/padding has an empty copied source range.
+The user approved this gutter redesign for PR #6 after reviewing the inline
+presentation. There is no synthetic whole-document fold. Implicit YAML stream
+mapping/sequence roots have no control; explicit root braces/brackets remain
+actual foldable containers. Block sections preserve their first source line.
+A logical source line has one arrow for its outermost starting container;
+containers starting on their own lines get independent arrows. Wrapping keeps
+the arrow on the first displayed row. Empty/scalar sections need no arrow.
+The gutter receives mouse input independently of selectable text and never
+contributes copied characters. Raw has no gutter or folding controls.
 
-Only visible controls receive button views; scrolling/resizing updates their
-glyph coordinates and key-view chain. Each button has a section/line label and
-expanded state. With the text focused, Command-Option-Left collapses the section
-at the cursor and Command-Option-Right expands it. Finder keyboard entry uses the
-same Full Keyboard Access setting as the existing Open controls. No global key
-monitor, focus stealing, Escape override or system preference change is added.
+Only viewport controls receive button views; scrolling/resizing updates their
+first-line coordinates and key-view chain. The gutter background and buttons
+are siblings of the text in NSClipView, with a reserved text inset. Buttons
+stay independent accessibility contents of FoldingScrollView with native
+scroll-area parents and linear navigation order. This preserves the structure
+that passed the user's physical Full Keyboard Access test; controls must not
+be nested inside the atomic text accessibility element. Each button has a
+section/line label and expanded state. Folding batches text replacement,
+selection remapping and viewport restoration before updating native controls.
+A final layout notification identifies the changed elements using the SDK
+UI-elements payload, rather than announcing anonymous intermediate layouts.
+Value notifications report the final expanded state. Borderless buttons use
+an exterior focus ring.
 
-The buttons are sibling views of the text view inside NSClipView. FoldingScrollView
-exposes the text and visible buttons as separate accessibility contents, with
-native parent relationships and linear navigation order. Buttons inside the
-text accessibility element were not reachable by Finder's Full Keyboard Access
-in physical testing; adding layout notifications alone did not resolve it.
-TextKit's attachment objects are presentation-only spaces and excluded from the
-text element's children to avoid duplicate arrows and thousands of off-screen
-items. Native text value, selection and range operations remain available.
-Layout/value notifications report control changes without forcing focus or
-changing user preferences. Borderless buttons use an exterior focus ring.
+With text focused, Command-Option-Left/Right collapse/expand the section at the
+cursor. Finder keyboard entry uses the user-controlled Full Keyboard Access
+setting, as with the existing Open controls. No global key monitor, focus
+stealing, Escape override or system preference change is added. Physical Finder
+keyboard acceptance must be repeated for the gutter candidate.
 
 Fold state is an in-memory value for one Prettified session. A parent hides its
 descendants' controls without deleting their collapsed states. Reopening the

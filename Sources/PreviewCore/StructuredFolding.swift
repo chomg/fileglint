@@ -258,9 +258,13 @@ extension Folding {
                 let row = source.lines[source.line(at: start)]
                 let bound = header.map { source.blockBound(after: $0, before: upper, protected: scalarRanges) } ?? upper
                 end = source.sectionEnd(before: bound, indent: row.indent, protected: scalarRanges)
-                let contentStart = header == nil || header == offset || row.contentEnd >= end ? start : row.contentEnd
-                guard end > contentStart else { return }
-                result.append(FoldRegion(kind: kind, range: NSRange(start..<end), contentRange: NSRange(contentStart..<end), depth: depth, id: identity, controlOffset: contentStart))
+                // Implicit stream roots have no visible heading and no
+                // document-wide control. Still visit their actual children.
+                // Other block containers keep their first physical source line.
+                let contentStart = row.contentEnd
+                if depth > 0 && end > contentStart {
+                    result.append(FoldRegion(kind: kind, range: NSRange(start..<end), contentRange: NSRange(contentStart..<end), depth: depth, id: identity, controlOffset: contentStart))
+                }
             }
             if case .mapping(let map) = node {
                 let pairs = Array(map).filter { max(source.offset($0.key.mark) ?? -1, source.offset($0.value.mark) ?? -1) >= offset }

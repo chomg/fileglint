@@ -102,7 +102,7 @@ public final class PreviewViewController: NSViewController {
             }
             result.addAttribute(.foregroundColor, value: color, range: token.range)
         }
-        textView.setDocument(result, regions: mode.selectedSegment == 1 ? document.foldRegions : [])
+        textView.setDocument(result, regions: mode.selectedSegment == 1 ? document.foldRegions : [], showsGutter: mode.selectedSegment == 1)
         textView.setSelectedRange(NSRange(location: 0, length: 0))
         if full.length > 0 { textView.scrollRangeToVisible(NSRange(location: 0, length: 0)) }
     }

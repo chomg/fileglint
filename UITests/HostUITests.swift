@@ -44,15 +44,14 @@ final class HostUITests: XCTestCase {
             let formatted = try XCTUnwrap(content.value as? String)
             XCTAssertTrue(formatted.hasPrefix("# Fileglint settings\n"))
             XCTAssertTrue(formatted.contains("# application name\n"))
-            // The opening marker now has an inline disclosure after it. Check
-            // visible data/comments here; exact source is checked on Copy below.
-            XCTAssertTrue(formatted.contains("1, 2, 3] # sample values"), formatted)
+            XCTAssertTrue(formatted.contains("[1, 2, 3] # sample values"), formatted)
             content.click()
             content.typeKey("a", modifierFlags: .command)
             content.typeKey("c", modifierFlags: .command)
             let expected = format == "YAML"
                 ? "# Fileglint settings\nname: Fileglint # application name\nitems: [1, 2, 3] # sample values\npreview:\n  # display settings\n  enabled: true\n  nested:\n    values: [4, 5]\n"
                 : "# Fileglint settings\nname = \"Fileglint\" # application name\nitems = [1, 2, 3] # sample values\n\n# display settings\n[preview]\nenabled = true\n[preview.nested]\nvalues = [4, 5]\n"
+            XCTAssertEqual(formatted, expected)
             XCTAssertEqual(NSPasteboard.general.string(forType: .string), expected)
             window.radioButtons["Raw"].click()
             XCTAssertEqual(content.value as? String, raw)
@@ -76,8 +75,13 @@ final class HostUITests: XCTestCase {
             window.radioButtons["Prettified"].click()
             let controls = window.descendants(matching: .button).matching(NSPredicate(format: "identifier BEGINSWITH %@", "fold-"))
             XCTAssertTrue(controls.firstMatch.waitForExistence(timeout: 5))
+            let expanded = try XCTUnwrap(content.value as? String)
+            for button in controls.allElementsBoundByIndex {
+                XCTAssertLessThan(button.frame.maxX, content.frame.minX + 32)
+            }
             content.click(); content.typeKey("a", modifierFlags: .command); content.typeKey("c", modifierFlags: .command)
             let full = try XCTUnwrap(NSPasteboard.general.string(forType: .string))
+            XCTAssertEqual(expanded, full)
             XCTAssertFalse(full.contains("\u{fffc}"))
             let id = controls.firstMatch.identifier
             window.buttons[id].click()

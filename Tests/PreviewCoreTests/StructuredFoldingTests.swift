@@ -93,12 +93,12 @@ struct StructuredFoldingTests {
     }
 
     @Test func yamlFlowRootSequenceUnicodeAndEmptyScalars() throws {
-        for raw in ["[{x: [1, 2]}, {}, []]", "- name: one\n- name: two\n", "{\"세계😀\": [\"#[]{}\", 2]}\n", "a: &a [1,2]\nb: *a\n", "a: &a !<tag:example.com,2026:map> {b: [1,2]}\ncopy: *a\n"] {
+        for raw in ["[{x: [1, 2]}, {}, []]", "{\"세계😀\": [\"#[]{}\", 2]}\n", "a: &a [1,2]\nb: *a\n", "a: &a !<tag:example.com,2026:map> {b: [1,2]}\ncopy: *a\n"] {
             let value = try doc(raw, .yaml)
             assertRanges(value)
             #expect(!value.foldRegions.isEmpty)
         }
-        for raw in ["", "# comment only\n", "[]", "{}", "'[] {} # text'", "|\n  {not: [structure]}\n"] {
+        for raw in ["", "# comment only\n", "[]", "{}", "'[] {} # text'", "|\n  {not: [structure]}\n", "- name: one\n- name: two\n"] {
             #expect(try doc(raw, .yaml).foldRegions.isEmpty)
         }
     }
@@ -206,7 +206,9 @@ struct StructuredFoldingTests {
     @Test func aliasesDoNotReexpandAndLargeSourceTablesStayBounded() throws {
         let yaml = "- &a [" + Array(repeating: "1", count: 2_000).joined(separator: ",") + "]\n" + String(repeating: "- *a\n", count: 2_000)
         let aliases = try doc(yaml, .yaml)
-        #expect(aliases.foldRegions.count == 2)
+        #expect(aliases.foldRegions.count == 1)
+        #expect(aliases.foldRegions.first?.kind == .sequence)
+        #expect((aliases.pretty! as NSString).substring(with: aliases.foldRegions[0].range).hasPrefix("["))
         let toml = (0..<5_000).map { "[table\($0)]\nvalue = 1\n" }.joined()
         #expect(toml.utf8.count <= 131_072)
         let tables = try doc(toml, .toml)
@@ -225,10 +227,10 @@ struct StructuredFoldingTests {
         #expect(source.substring(with: second.range).contains("extra: true"))
         let complex = try doc("{key: '[not structure]'}: 1\nsibling: [2]\n", .yaml)
         assertRanges(complex)
-        #expect(complex.foldRegions.filter { $0.kind == .mapping }.count == 2)
+        #expect(complex.foldRegions.filter { $0.kind == .mapping }.count == 1)
         let spans = complex.foldRegions.map { (complex.pretty! as NSString).substring(with: $0.range) }
         #expect(spans.contains("{key: '[not structure]'}"))
-        #expect(spans[0].contains("sibling:"))
+        #expect(!spans[0].contains("sibling:"))
         var state = FoldSession(regions: complex.foldRegions)
         let complexKey = try #require(complex.foldRegions.first { (complex.pretty! as NSString).substring(with: $0.range) == "{key: '[not structure]'}" })
         state.toggle(complexKey.id)
@@ -256,10 +258,32 @@ struct StructuredFoldingTests {
         let start = display.displayOffset(forSourceOffset: first)
         let end = display.displayOffset(forSourceOffset: last)
         #expect(display.copiedText(in: NSRange(start..<end)) == (source as NSString).substring(with: NSRange(first..<last)))
-        for control in display.controls { #expect(display.copiedText(in: control.displayRange).isEmpty) }
+        #expect(display.controls.allSatisfy { $0.displayOffset >= 0 && $0.displayOffset < (display.string as NSString).length })
+        #expect(FoldProjection(source: source, session: FoldSession(regions: value.foldRegions)).string == source)
         #expect(display.copiedText(in: NSRange(location: NSNotFound, length: 1)).isEmpty)
         session.toggle(child.id)
         let expanded = FoldProjection(source: source, session: session)
         #expect(expanded.copiedText(in: NSRange(location: 0, length: (expanded.string as NSString).length)) == source)
+    }
+
+    @Test func yamlGutterOmitsImplicitRootsAndKeepsRealEntryHeadings() throws {
+        let value = try doc("# heading\n- name: one\n  enabled: true\n- name: two\n  enabled: false\n", .yaml)
+        let source = value.pretty! as NSString
+        #expect(value.foldRegions.count == 2)
+        #expect(value.foldRegions.allSatisfy { $0.kind == .mapping && $0.depth > 0 })
+        var state = FoldSession(regions: value.foldRegions)
+        let first = try #require(value.foldRegions.first)
+        #expect(source.substring(with: first.range).hasPrefix("name: one"))
+        state.toggle(first.id)
+        let shown = FoldProjection(source: source as String, session: state)
+        #expect(shown.string.hasPrefix("# heading\n- name: one … "))
+        #expect(!shown.string.contains("enabled: true"))
+        #expect(shown.string.contains("- name: two\n  enabled: false"))
+        #expect(shown.copiedText(in: NSRange(location: 0, length: (shown.string as NSString).length)) == value.pretty)
+        #expect(FoldProjection(source: value.pretty!, session: FoldSession(regions: value.foldRegions)).string == value.pretty)
+        for raw in ["{items: [1,2]}", "[{name: one}, {name: two}]"] {
+            let flow = try doc(raw, .yaml)
+            #expect(flow.foldRegions.contains { $0.depth == 0 })
+        }
     }
 }

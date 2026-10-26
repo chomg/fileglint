@@ -76,7 +76,12 @@ Raw has no folding controls. Switching modes/files creates an expanded session.
 Copy includes hidden source when a selection crosses a fold; Select All → Copy
 must equal the complete formatted text, excluding controls and synthetic labels.
 
-Native inline buttons expose section/line names and expanded state. Finder
+Native buttons in a fixed left gutter expose section/line names and expanded
+state. Expanded text equals the formatted source; no synthetic document headers
+or inline attachment spaces are inserted. One arrow represents the outermost
+container beginning on a logical line, on its first wrapped display row.
+Implicit YAML document roots have no arrow; explicit root containers remain
+foldable. The gutter is absent in Raw and excluded from text selection/copy. Finder
 keyboard entry uses Full Keyboard Access; in focused text, Command-Option-Left
 collapses the section at the cursor and Command-Option-Right expands it. Native
 Escape handling is unchanged. For all formats, verify child-state restoration,

@@ -255,3 +255,126 @@ Complete a clean committed local verification and both hosted targets for this
 final correction before PR creation. Record those final reports on issue #2.
 Minimum macOS 14 and Intel Finder remain not-run release validation targets;
 hosted Intel sample UI tests do not establish Intel Finder acceptance.
+
+## Approved left-gutter revision for PR #6
+
+The user approved a separate left gutter after reviewing the inline layout.
+The updated contract is recorded on issue #2 and RFC 0004: one outermost
+starting container per logical line, aligned on its first wrapped display row;
+no synthetic document folds or YAML Mapping/Sequence headings; explicit root
+braces/brackets remain actual containers. Expanded display text must equal the
+formatted source. Raw has no gutter. Session/copy/keyboard/Escape rules remain.
+
+FoldProjection now emits only source spans and collapsed placeholders, with
+separate positions for gutter controls. Implicit YAML stream roots are omitted
+while actual block entries keep their first physical line. Native buttons stay
+NSClipView peers, with a non-selectable margin and reserved text inset. This
+retains independent scroll accessibility contents and native parents.
+
+New regressions failed against the inline implementation (27 assertions in two
+tests; `artifacts/issue2-gutter-before.log`) and now pass. Coverage includes
+exact expanded text, one left column, same-line container selection, restored
+copying, omitted implicit roots, preserved YAML entry headings, first wrapped
+row alignment after resizing and unchanged selection when clicking blank
+gutter space. Native hit testing caught a background-layer ordering mistake;
+owned visual inspection caught painting outside the margin. Both were fixed
+before final verification. Synthetic light/dark renders now show source text
+and aligned gutter controls without inline attachments.
+
+The complete local scope passed **60 tests in nine suites**, shared compilation,
+universal app/extension/launcher binaries and the real sandboxed launcher
+regression (`20261023T092445Z-e529aeeb`; `artifacts/issue2-gutter-local.log`).
+The signed development build passed (`artifacts/issue2-gutter-development.log`).
+The refreshed host exposes exact formatted text and independent native buttons
+with scroll-area parents (`artifacts/issue2-gutter-host-hierarchy.json`).
+
+The owned YAML fixture has been revealed for manual opening and physical
+keyboard/appearance acceptance. Actual Finder all-format/copy/scroll regression
+and final-candidate hosted evidence remain pending. Do not count PR #6's earlier
+inline CI or physical acceptance as validation of this redesigned candidate.
+Update PR #6 after the required validation; do not merge without authority.
+
+### Repeated Space investigation — 2026-10-26
+
+The user refined the keyboard report: the gutter works repeatedly with roughly
+one second between Space presses; rapid double presses can be missed. This was
+observed in the earlier gutter build, before the following correction. It is
+not evidence that the new correction fixed rapid physical activation, nor proof
+of an operating-system timing rule.
+
+A native repeated-activation check passes both before and after the correction:
+six toggles per YAML section retain the same NSButton, canonical accessibility
+element and first responder after layout settles. Logs:
+`artifacts/issue2-gutter-repeat-before.log` and
+`artifacts/issue2-gutter-repeat-atomic.log`. This is component coverage, not a
+reproduction of the Full Keyboard Access input-delivery problem.
+
+Folding now batches text replacement, source-selection remapping and viewport
+restoration before updating native buttons. The final accessibility layout
+notification identifies changed elements with the SDK's UI-elements payload;
+intermediate renders no longer announce anonymous layouts. No keyboard hook,
+artificial wait, preference change or forced-focus notification is added.
+
+The full local scope passed **61 tests in nine suites**, shared compilation,
+universal binaries and the sandboxed launcher regression
+(`20261026T014528Z-db6975d9`; `artifacts/issue2-gutter-repeat-local.log`).
+The signed build passed (`artifacts/issue2-gutter-repeat-development.log`).
+Actual Finder passed all four extensions' nested/session/full-and-partial-copy
+checks, independent TOML entries, rapid navigation and invalid/size fallbacks.
+A 2,001-container document exposed 12 native controls initially and 11 after
+scrolling; folding, copying and expansion passed at source line 1,025. Six YAML
+buttons align in one left gutter with correct scroll-area accessibility parents,
+expanded text equals Prettified, and all six fixture hashes remain unchanged.
+Evidence: `artifacts/issue2-gutter-repeat-finder-formats-ready.log`,
+`issue2-gutter-repeat-extras.log`, `issue2-gutter-repeat-boundaries.log`,
+`issue2-gutter-repeat-large.log` and the geometry/hierarchy JSON reports.
+
+The first diagnostic after provider refresh acted before controls were ready;
+its parent driver discarded nested stderr. The retained incomplete result is
+excluded. The driver now waits for actual format controls without retrying
+actions and retains nested errors. The completed all-format run passed.
+
+The corrected YAML preview is open for a physical normal/rapid Space retry.
+Final committed local scope, required hosted targets and PR #6 publication
+remain pending that result. Earlier inline CI is historical.
+
+The user subsequently confirmed that the corrected build still repeats only
+at a slower cadence; rapid Space presses can be missed. The physical rapid-
+activation problem is therefore **not resolved** by batching notifications.
+Normal physical keyboard entry and slower repeated activation work.
+
+A task-owned, ignored `Issue2KeyboardProbe.app` now provides a plain AppKit
+checkbox and a borderless native arrow button with visible action counters.
+It contains no folding code, keyboard event interception or system-setting
+changes. Its initial accessibility state was inspected (both counters zero),
+and a physical fast-double-Space comparison is pending. Button action counts
+are retained in `artifacts/issue2-native-keyboard-probe-actions.jsonl`; they
+record only this diagnostic app's actions, not global keystrokes. Do not infer
+an OS limitation from the uncompleted comparison. Close only this task-owned
+probe after the result, then resolve or accurately bound the remaining timing
+problem before finishing the PR update.
+
+The native comparison completed: the user reported one action for slower
+input and two for rapid input. The diagnostic retained 68 checkbox actions
+and 52 plain-arrow actions. This does not support blaming an inherent macOS
+one-second restriction.
+
+A second isolated app links the unchanged current PreviewUI/PreviewCore and
+dependency object files. Its own NSApplication subclass counts native actions
+before forwarding to the real gutter button target, logging before/after
+states and handler duration. No instrumentation is added to product sources
+or global keyboard input. Two sessions have recorded 44 and 26 actions; every
+forwarded action changed the selected section's state. Together they contain
+30 consecutive same-control pairs under 25ms. In the first session handlers
+took approximately 2–7ms. Evidence: `artifacts/issue2-keyboard-action-audit.json`,
+`issue2-folding-probe-session-audit.json` and probe action logs. These are host
+diagnostic results, not instrumentation of the actual Finder process.
+
+A new native-control regression sends two immediate actions without sleeping,
+layout passes or event-loop turns. The first collapses; the second restores
+the exact expanded document, focus and complete copying. Ten pairs passed
+(`artifacts/issue2-gutter-immediate-actions.log`). The full suite now contains
+62 tests. The final physical clarification distinguishes two actual presses
+producing two toggles from one actual press producing duplicate activations.
+Do not call a return to the original state after two toggles a lost input, or
+claim the physical report resolved before that clarification.

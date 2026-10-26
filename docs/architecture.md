@@ -23,15 +23,16 @@ Prettified folding follows [issue #2](https://github.com/chomg/fileglint/issues/
 and [RFC 0004](rfcs/0004-prettified-folding.md). PreviewCore supplies immutable
 formatted UTF-16 ranges for JSON containers, parsed YAML mappings/sequences and
 validated TOML tables/arrays. A transient FoldSession retains hidden child states;
-FoldProjection maps visible text, synthetic labels/controls and collapsed ranges
-to the complete source. FoldingTextView preserves attributed source text, adds
-inline native buttons only in the viewport and exports logical selections as
-plain source text, including hidden content. Mode/document changes replace the
+FoldProjection maps visible source text and collapsed placeholders to the
+complete source, with separate positions for gutter controls. FoldingTextView
+preserves attributed source text, positions native buttons in a separate left
+gutter only in the viewport, and exports logical selections as plain source
+text, including hidden content. Mode/document changes replace the
 session. No formatting/source text is removed or persisted by folding.
 The buttons live beside the text view in NSClipView, so FoldingScrollView exposes
 them as independent accessibility contents rather than children of a text area.
-The text retains native selection and accessibility; UI attachment spaces are
-excluded from the accessibility hierarchy.
+The text retains native selection and accessibility. The gutter never inserts
+characters into the text or copied selection.
 
 ## Platform ownership
 

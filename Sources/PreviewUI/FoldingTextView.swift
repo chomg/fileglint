@@ -1,16 +1,34 @@
 import AppKit
 import PreviewCore
 
-private final class DisclosureSpace: NSTextAttachmentCell {
-    override func cellSize() -> NSSize { NSSize(width: 20, height: 17) }
-    override func cellBaselineOffset() -> NSPoint { NSPoint(x: 0, y: -3) }
-    override func draw(withFrame cellFrame: NSRect, in controlView: NSView?) {}
+/// A non-selectable margin. Buttons remain independent peers so native
+/// accessibility and Full Keyboard Access see them outside the text element.
+private final class FoldingGutter: NSView {
+    override var isFlipped: Bool { true }
+    override func draw(_ dirtyRect: NSRect) {
+        let rect = bounds.intersection(dirtyRect)
+        NSColor.controlBackgroundColor.setFill(); rect.fill()
+        NSColor.separatorColor.setFill()
+        NSRect(x: bounds.maxX - 1, y: rect.minY, width: 1, height: rect.height).fill()
+    }
+    override func mouseDown(with event: NSEvent) {}
+    override func mouseDragged(with event: NSEvent) {}
 }
 
 /// Expose controls beside the text accessibility element so motor navigation
 /// can discover each disclosure independently of text interaction.
 @MainActor
 final class FoldingScrollView: NSScrollView {
+    static let gutterWidth: CGFloat = 28
+    private let gutter = FoldingGutter()
+
+    func updateGutter(shown: Bool) {
+        guard shown else { gutter.removeFromSuperview(); return }
+        if gutter.superview !== contentView { contentView.addSubview(gutter, positioned: .above, relativeTo: documentView) }
+        gutter.frame = NSRect(x: contentView.bounds.minX, y: contentView.bounds.minY,
+                              width: Self.gutterWidth, height: contentView.bounds.height)
+    }
+
     override func accessibilityContents() -> [Any]? {
         guard let documentView else { return [] }
         let buttons = (documentView as? FoldingTextView)?.disclosureControls.filter {
@@ -39,11 +57,15 @@ public final class FoldingTextView: NSTextView {
     private var accessibleFrames = [ObjectIdentifier: NSRect]()
     private var clipObserver: NSObjectProtocol?
     private var updatingButtons = false
+    private var updatingPresentation = false
+    private var showsGutter = false
     private var lineStarts = [0]
     private var lineLabels = [Int: String]()
     public weak var afterDisclosures: NSView?
 
-    public func setDocument(_ text: NSAttributedString, regions: [FoldRegion]) {
+    public func setDocument(_ text: NSAttributedString, regions: [FoldRegion], showsGutter: Bool = false) {
+        self.showsGutter = showsGutter
+        textContainerInset = NSSize(width: 14 + (showsGutter ? FoldingScrollView.gutterWidth : 0), height: 14)
         for button in disclosureButtons.values { button.removeFromSuperview() }
         disclosureButtons.removeAll()
         original = NSAttributedString(attributedString: text)
@@ -64,15 +86,18 @@ public final class FoldingTextView: NSTextView {
         let selection = selectedRange()
         let from = projection.sourceOffset(forDisplayOffset: selection.location)
         let to = selection.length == 0 ? from : projection.sourceOffset(forDisplayOffset: NSMaxRange(selection), trailing: true)
+        // Text replacement, selection remapping and viewport restoration can
+        // each trigger layout. Keep the native controls stable until the final
+        // geometry is ready, then notify accessibility clients once.
+        updatingPresentation = true
         session.toggle(id)
         render()
         let start = projection.displayOffset(forSourceOffset: from)
         let end = projection.displayOffset(forSourceOffset: to, trailing: true)
         setSelectedRange(NSRange(location: start, length: max(0, end - start)))
         if let viewport, let scroll = enclosingScrollView { scroll.contentView.scroll(to: viewport); scroll.reflectScrolledClipView(scroll.contentView) }
-        if let button = disclosureButtons[id] {
-            NSAccessibility.post(element: NSAccessibility.unignoredDescendant(of: button) ?? button, notification: .valueChanged)
-        }
+        updatingPresentation = false
+        updateDisclosureButtons(changedID: id)
     }
 
     private func render() {
@@ -81,11 +106,7 @@ public final class FoldingTextView: NSTextView {
         for segment in projection.segments {
             switch segment.kind {
             case .source: result.append(original.attributedSubstring(from: segment.sourceRange))
-            case .control:
-                let attachment = NSTextAttachment()
-                attachment.attachmentCell = DisclosureSpace(textCell: "")
-                result.append(NSAttributedString(attachment: attachment))
-            case .placeholder, .annotation:
+            case .placeholder:
                 result.append(NSAttributedString(string: (projection.string as NSString).substring(with: segment.displayRange), attributes: [
                     .font: NSFont.monospacedSystemFont(ofSize: 13, weight: .regular),
                     .foregroundColor: NSColor.secondaryLabelColor,
@@ -114,8 +135,8 @@ public final class FoldingTextView: NSTextView {
     public override func layout() { super.layout(); updateDisclosureButtons() }
 
     public override func accessibilityChildren() -> [Any]? {
-        // Attachments are presentation-only spaces. Actual controls are peers
-        // in the clip view, outside this atomic text accessibility element.
+        // The gutter buttons are independent peers, outside this atomic text
+        // accessibility element. The inherited text/selection stays native.
         []
     }
 
@@ -125,18 +146,24 @@ public final class FoldingTextView: NSTextView {
         }
     }
 
-    private func updateDisclosureButtons() {
-        guard !updatingButtons else { return }
+    private func updateDisclosureButtons(changedID: Int? = nil) {
+        guard !updatingButtons, !updatingPresentation else { return }
         updatingButtons = true
         defer {
             updatingButtons = false
             let frames = Dictionary(uniqueKeysWithValues: disclosureButtons.values.map { (ObjectIdentifier($0), $0.frame) })
-            if frames != accessibleFrames {
+            if let changedID, let button = disclosureButtons[changedID] {
+                NSAccessibility.post(element: NSAccessibility.unignoredDescendant(of: button) ?? button, notification: .valueChanged)
+            }
+            if frames != accessibleFrames || changedID != nil {
                 accessibleFrames = frames
-                NSAccessibility.post(element: enclosingScrollView ?? self, notification: .layoutChanged)
+                let changed = changedID.flatMap { disclosureButtons[$0] }.map { [$0] } ?? disclosureControls
+                NSAccessibility.post(element: enclosingScrollView ?? self, notification: .layoutChanged,
+                                     userInfo: [.uiElements: NSAccessibility.unignoredChildren(from: changed)])
             }
         }
-        guard !projection.controls.isEmpty, let manager = layoutManager, let container = textContainer,
+        (enclosingScrollView as? FoldingScrollView)?.updateGutter(shown: showsGutter)
+        guard showsGutter, !projection.controls.isEmpty, let manager = layoutManager, let container = textContainer,
               let buttonHost = enclosingScrollView?.contentView else {
             for button in disclosureButtons.values { button.removeFromSuperview() }
             disclosureButtons.removeAll(); nextKeyView = afterDisclosures
@@ -145,21 +172,23 @@ public final class FoldingTextView: NSTextView {
         let viewport = visibleRect.insetBy(dx: -30, dy: -50)
         let glyphs = manager.glyphRange(forBoundingRect: viewport.offsetBy(dx: -textContainerInset.width, dy: -textContainerInset.height), in: container)
         let characters = manager.characterRange(forGlyphRange: glyphs, actualGlyphRange: nil)
-        var visible = Set<Int>(), ordered = [NSButton]()
+        var visible = Set<Int>(), ordered = [NSButton](), rows = Set<CGFloat>()
         // Binary search to avoid scanning thousands of off-screen controls on
         // each scroll. Only viewport controls receive native button views.
         let controls = projection.controls
         var low = 0, high = controls.count
-        while low < high { let mid = (low + high) / 2; if controls[mid].displayRange.location < characters.location { low = mid + 1 } else { high = mid } }
-        for segment in controls.dropFirst(low) {
-            guard segment.displayRange.location <= NSMaxRange(characters) else { break }
-            guard case .control(let id) = segment.kind, let region = regionsByID[id] else { continue }
-            let range = manager.glyphRange(forCharacterRange: segment.displayRange, actualCharacterRange: nil)
-            let rect = manager.boundingRect(forGlyphRange: range, in: container).offsetBy(dx: textContainerInset.width, dy: textContainerInset.height)
-            guard rect.intersects(viewport) else { continue }
+        while low < high { let mid = (low + high) / 2; if controls[mid].displayOffset < characters.location { low = mid + 1 } else { high = mid } }
+        for control in controls.dropFirst(low) {
+            guard control.displayOffset <= NSMaxRange(characters) else { break }
+            let id = control.id
+            guard let region = regionsByID[id], control.displayOffset < (string as NSString).length else { continue }
+            let glyph = manager.glyphIndexForCharacter(at: control.displayOffset)
+            let rect = manager.lineFragmentRect(forGlyphAt: glyph, effectiveRange: nil).offsetBy(dx: textContainerOrigin.x, dy: textContainerOrigin.y)
+            guard rect.intersects(viewport), rows.insert(rect.minY).inserted else { continue }
             let button = disclosureButtons[id] ?? NSButton()
-            if button.superview !== buttonHost { buttonHost.addSubview(button, positioned: .above, relativeTo: self) }
-            button.frame = convert(NSRect(x: rect.minX, y: rect.minY, width: 19, height: max(17, rect.height)), to: buttonHost)
+            if button.superview !== buttonHost { buttonHost.addSubview(button, positioned: .above, relativeTo: nil) }
+            let line = convert(rect, to: buttonHost)
+            button.frame = NSRect(x: buttonHost.bounds.minX + 4, y: line.minY, width: 19, height: max(14, line.height))
             let collapsed = session.collapsedIDs.contains(id)
             button.image = NSImage(systemSymbolName: collapsed ? "chevron.right" : "chevron.down", accessibilityDescription: nil)
             button.isBordered = false
@@ -195,7 +224,6 @@ public final class FoldingTextView: NSTextView {
             lineLabels[index] = String(snippet.trimmingCharacters(in: .whitespacesAndNewlines).prefix(80))
         }
         let kind = region.kind == .tableEntry ? "table entry" : region.kind.rawValue
-        if region.depth == 0 && region.range == region.contentRange { return "document \(kind) at line \(index + 1)" }
         return "\(kind) at line \(index + 1): \(lineLabels[index] ?? "")"
     }
     @objc private func toggleDisclosure(_ sender: NSButton) {
@@ -219,8 +247,10 @@ public final class FoldingTextView: NSTextView {
         if flags == [.command, .option] && (event.keyCode == 123 || event.keyCode == 124) {
             let cursor = selectedRange().location
             let sourceCursor = projection.sourceOffset(forDisplayOffset: cursor)
+            let actionable = Set(projection.controls.map(\.id))
             let candidates = session.visibleRegions.filter { region in
-                sourceCursor >= region.range.location && sourceCursor <= NSMaxRange(region.range)
+                guard actionable.contains(region.id) else { return false }
+                return sourceCursor >= region.range.location && sourceCursor <= NSMaxRange(region.range)
             }
             if let region = candidates.min(by: { $0.range.length == $1.range.length ? $0.depth > $1.depth : $0.range.length < $1.range.length }) {
                 let collapse = event.keyCode == 123

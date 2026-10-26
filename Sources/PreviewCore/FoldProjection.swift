@@ -1,29 +1,30 @@
 import Foundation
 
-/// Presentation-only characters have explicit source mappings. Copy never
-/// relies on searching for or removing a marker that might occur in the file.
+/// Only source text and collapsed placeholders participate in selection.
+/// Gutter controls have positions, but never insert characters into the text.
 public struct FoldProjection: Sendable {
     public struct Segment: Sendable {
-        public enum Kind: Equatable, Sendable { case source, control(Int), placeholder(Int), annotation }
+        public enum Kind: Equatable, Sendable { case source, placeholder(Int) }
         public let kind: Kind
         public let sourceRange: NSRange
         public let displayRange: NSRange
     }
+    public struct Control: Sendable {
+        public let id: Int
+        public let displayOffset: Int
+    }
     public let source: String
     public let string: String
     public let segments: [Segment]
-    public let controls: [Segment]
+    public let controls: [Control]
 
     public init(source: String, session: FoldSession) {
         self.source = source
         let original = source as NSString
-        enum Event { case control(FoldRegion), hide(FoldRegion) }
-        var events = [(Int, Int, Event)]()
-        for (index, region) in session.visibleRegions.enumerated() {
-            events.append((region.controlOffset, index * 2, .control(region)))
-            if session.collapsedIDs.contains(region.id) { events.append((region.contentRange.location, index * 2 + 1, .hide(region))) }
+        let visible = session.visibleRegions
+        let hidden = visible.filter { session.collapsedIDs.contains($0.id) }.sorted {
+            $0.contentRange.location < $1.contentRange.location
         }
-        events.sort { $0.0 == $1.0 ? $0.1 < $1.1 : $0.0 < $1.0 }
         var output = "", result = [Segment](), cursor = 0, displayed = 0
         func append(_ text: String, source: NSRange, kind: Segment.Kind) {
             let length = (text as NSString).length
@@ -31,28 +32,52 @@ public struct FoldProjection: Sendable {
             result.append(Segment(kind: kind, sourceRange: source, displayRange: NSRange(location: displayed, length: length)))
             output += text; displayed += length
         }
-        for (offset, _, event) in events {
-            guard offset >= cursor, offset <= original.length else { continue }
-            if offset > cursor { let range = NSRange(cursor..<offset); append(original.substring(with: range), source: range, kind: .source); cursor = offset }
-            switch event {
-            case .control(let region):
-                let point = NSRange(location: offset, length: 0)
-                if region.range == region.contentRange { append("\(region.kind.rawValue.capitalized) ", source: point, kind: .annotation) }
-                append("\u{fffc}", source: point, kind: .control(region.id))
-                if region.range == region.contentRange && !session.collapsedIDs.contains(region.id) {
-                    let column = region.range.location - original.lineRange(for: NSRange(location: region.range.location, length: 0)).location
-                    let padding = String(repeating: " ", count: min(128, column))
-                    append("\n\(padding)", source: point, kind: .annotation)
-                }
-            case .hide(let region):
-                let range = region.contentRange
-                guard range.location == cursor, NSMaxRange(range) <= original.length else { continue }
-                append(" … ", source: range, kind: .placeholder(region.id)); cursor = NSMaxRange(range)
+        for region in hidden {
+            let range = region.contentRange
+            guard range.location >= cursor, NSMaxRange(range) <= original.length else { continue }
+            if range.location > cursor {
+                let retained = NSRange(cursor..<range.location)
+                append(original.substring(with: retained), source: retained, kind: .source)
             }
+            append(" … ", source: range, kind: .placeholder(region.id))
+            cursor = NSMaxRange(range)
         }
-        if cursor < original.length { let range = NSRange(cursor..<original.length); append(original.substring(with: range), source: range, kind: .source) }
+        if cursor < original.length {
+            let range = NSRange(cursor..<original.length)
+            append(original.substring(with: range), source: range, kind: .source)
+        }
         string = output; segments = result
-        controls = result.filter { if case .control = $0.kind { return true }; return false }
+
+        // Build line indexes once rather than repeatedly scanning a long flow
+        // line for every nested container. Choose the outermost starting region
+        // on each source line, then avoid collisions after multiline folds.
+        func starts(_ text: String) -> [Int] {
+            let units = Array(text.utf16)
+            var rows = [0]
+            for (i, unit) in units.enumerated() {
+                if unit == 10 || unit == 0x85 || unit == 0x2028 || unit == 0x2029 || (unit == 13 && (i + 1 == units.count || units[i + 1] != 10)) { rows.append(i + 1) }
+            }
+            return rows
+        }
+        func lineStart(_ offset: Int, _ rows: [Int]) -> Int {
+            var low = 0, high = rows.count
+            while low < high { let mid = (low + high) / 2; if rows[mid] <= offset { low = mid + 1 } else { high = mid } }
+            return rows[max(0, low - 1)]
+        }
+        let sourceRows = starts(source), displayRows = starts(output)
+        var sourceLines = Set<Int>(), displayLines = Set<Int>(), buttons = [Control]()
+        let ordered = visible.sorted {
+            $0.range.location == $1.range.location ? $0.range.length > $1.range.length : $0.range.location < $1.range.location
+        }
+        for region in ordered {
+            let row = lineStart(region.range.location, sourceRows)
+            guard sourceLines.insert(row).inserted else { continue }
+            let position = Self.displayOffset(row, segments: result, count: displayed, trailing: false)
+            let displayRow = lineStart(position, displayRows)
+            guard displayLines.insert(displayRow).inserted else { continue }
+            buttons.append(Control(id: region.id, displayOffset: displayRow))
+        }
+        controls = buttons
     }
 
     public func copiedText(in selection: NSRange) -> String {
@@ -65,7 +90,6 @@ public struct FoldProjection: Sendable {
             let overlap = NSIntersectionRange(selection, segment.displayRange)
             guard overlap.length > 0 else { continue }
             switch segment.kind {
-            case .control, .annotation: break
             case .placeholder: result += original.substring(with: segment.sourceRange)
             case .source:
                 result += original.substring(with: NSRange(location: segment.sourceRange.location + overlap.location - segment.displayRange.location, length: overlap.length))
@@ -74,23 +98,27 @@ public struct FoldProjection: Sendable {
         return result
     }
 
-    public func displayOffset(forSourceOffset offset: Int, trailing: Bool = false) -> Int {
-        for segment in segments where segment.sourceRange.length > 0 && offset <= NSMaxRange(segment.sourceRange) {
-            guard offset >= segment.sourceRange.location else { return segment.displayRange.location }
-            if case .placeholder = segment.kind {
-                return offset == segment.sourceRange.location || (!trailing && offset < NSMaxRange(segment.sourceRange))
-                    ? segment.displayRange.location : NSMaxRange(segment.displayRange)
-            }
-            return segment.displayRange.location + offset - segment.sourceRange.location
+    private static func displayOffset(_ offset: Int, segments: [Segment], count: Int, trailing: Bool) -> Int {
+        var low = 0, high = segments.count
+        while low < high { let mid = (low + high) / 2; if NSMaxRange(segments[mid].sourceRange) < offset { low = mid + 1 } else { high = mid } }
+        guard low < segments.count else { return count }
+        let segment = segments[low]
+        guard offset >= segment.sourceRange.location else { return segment.displayRange.location }
+        if case .placeholder = segment.kind {
+            return offset == segment.sourceRange.location || (!trailing && offset < NSMaxRange(segment.sourceRange))
+                ? segment.displayRange.location : NSMaxRange(segment.displayRange)
         }
-        return (string as NSString).length
+        return segment.displayRange.location + offset - segment.sourceRange.location
+    }
+
+    public func displayOffset(forSourceOffset offset: Int, trailing: Bool = false) -> Int {
+        Self.displayOffset(offset, segments: segments, count: (string as NSString).length, trailing: trailing)
     }
 
     public func sourceOffset(forDisplayOffset offset: Int, trailing: Bool = false) -> Int {
         for segment in segments where offset < NSMaxRange(segment.displayRange) {
             let delta = max(0, offset - segment.displayRange.location)
             switch segment.kind {
-            case .control, .annotation: return segment.sourceRange.location
             case .source: return segment.sourceRange.location + delta
             case .placeholder: return trailing ? NSMaxRange(segment.sourceRange) : segment.sourceRange.location
             }
