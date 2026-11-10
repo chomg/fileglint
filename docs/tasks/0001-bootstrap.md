@@ -1,6 +1,10 @@
 # Task 0001 Configure the Product Harness
 
-Status: Partially complete — local gate and current Mac Finder flows pass; automated UI authorization and remaining target/hosted evidence pending
+Status: Agreed features complete and merged; local and hosted arm64/Intel verification passed. Minimum-macOS and Intel Finder acceptance remain uncompleted.
+
+Current status was reconciled on 2026-11-10. Dated sections below retain their
+original failures and pending states as history; see the latest status section
+at the end of this document before treating them as current work.
 
 ## Outcome and inputs
 
@@ -16,10 +20,10 @@ The user agreed on 2026-10-21 to a Quick Look extension with a minimal containin
 - [x] Implement doctor, repeatable locked setup and all finite command mappings in development.json schema 2. Missing platform tools correctly fail readiness/build checks.
 - [x] Define explicit local/CI lists and actual target matrix. No unavailable target is labelled passed or inapplicable.
 - [x] Implement bounded read-only raw/prettified JSON/YAML/TOML, lexical colors, native text selection and inline error/fallback behavior, with an RFC and meaningful shared checks.
-- [ ] Complete native universal app/extension build, XCUITest and installed Finder acceptance on required targets. The full local gate, universal build and current arm64 Finder checks pass. Automated UI initialization and the remaining OS/architecture checks are pending.
-- [ ] Establish hosted verification evidence and required branch checks. The real two-host workflow and local Git history are configured; no remote or hosted CI run exists here.
+- [ ] Complete native universal app/extension build, XCUITest and installed Finder acceptance on required targets. The full local gate, universal build, current arm64 development-build Finder checks and hosted UI suites pass. Minimum-OS and Intel Finder checks remain uncompleted.
+- [ ] Establish hosted verification evidence and required branch checks. The public repository and passing arm64/Intel workflow exist. GitHub reported main as unprotected on 2026-11-10, so required-check enforcement is not established.
 - [x] Document path policy, worktree/build/UI-session isolation, evidence/recovery and release boundaries. Existing engineering guidance/helpers and hooks were preserved.
-- [x] Finish committed/bootstrap preflight. Local main has the three requested commits; clean committed local preflight passed. The result-only documentation amendment is rechecked at its final head, with evidence below. No publication is authorized.
+- [x] Finish committed/bootstrap preflight. Local main has the three requested commits; clean committed local preflight passed. The result-only documentation amendment is rechecked at its final head, with evidence below. Publication authorization and subsequent evidence are recorded in the dated sections below.
 - [x] AgentCoop criterion is not applicable: selected workflow is direct; no agent runner or managed issue flow was introduced.
 
 ## Implementation and resolved decisions
@@ -299,3 +303,22 @@ file alone does not configure them. Existing UI automation and remaining
 Finder/OS/architecture acceptance gaps remain until actual target results
 establish otherwise. Binary signing, notarization and release packaging
 remain separate work.
+
+
+## Current merged-feature status — 2026-11-10
+
+Comment preservation (PR #4), application selection (PR #5) and Prettified
+folding (PR #6) are merged. The source revision
+`0692b8a5be3058e6b08c3a0b04343db9a708d82c` passed both required hosted jobs
+in [run 40278460966](https://github.com/chomg/fileglint/actions/runs/40278460966),
+including native host UI tests. The earlier local UI-automation failure and
+pre-publication statements above are historical, not current hosted blockers.
+There were no open issues or PRs when checked on 2026-11-10.
+
+Actual minimum-macOS and Intel Finder acceptance remain uncompleted. The
+packaged Release app's installation/Gatekeeper/Finder journey is also separate
+from development-build Finder checks and automated archive integrity. Required
+job enforcement is not configured: GitHub reported main as unprotected.
+The user has now authorized a personal-use 0.1.0 release; its candidate-specific
+checks, provenance and publication record are tracked in
+[task 0005](0005-personal-archive.md) and the GitHub Release notes.

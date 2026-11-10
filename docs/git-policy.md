@@ -121,8 +121,8 @@ are recorded after publication rather than inferred from local policy.
 | Merge ownership | Human-owned unless explicitly delegated; required reviews/checks must first be established and satisfied. |
 | Cleanup timing | Consolidate checkpoints before review readiness; inspect the final message again before squash merge. |
 | Reviewers and code owners | No CODEOWNERS file or required reviewer assignment was found. Hosted reviewer requirements are unknown. Human acceptance remains required. |
-| Branch protection | Unknown and not configured by this documentation. The development contract calls for both hosted architecture checks once published. |
-| Release/changelog tooling | No automated release, changelog or commit-derived version tooling was found. Production signing, notarization, packaging and publication remain separately authorized. |
+| Branch protection | GitHub reported main as unprotected on 2026-11-10. Both hosted architecture jobs remain required by the development contract; this task does not change enforcement settings. |
+| Release/changelog tooling | The personal packaging helper builds and verifies a ZIP. Publication is manual and separately authorized; no automatic tag release or changelog generation is configured. |
 
 Confirm hosted merge methods, reviewer assignments, branch protection and
 the remote default branch when connecting a remote. Local `main` is
@@ -152,7 +152,9 @@ Branches without an open PR can be checked locally or by manual dispatch.
 Required architecture jobs are
 `macos-arm64` on `macos-15` and `macos-x86_64` on `macos-15-intel`, with
 Xcode 26.0.1. Configure and confirm the host's exact check contexts when
-enabling branch protection; no hosted run currently establishes them.
+enabling branch protection. Both jobs passed for merged feature revision
+`0692b8a` in [run 40278460966](https://github.com/chomg/fileglint/actions/runs/40278460966);
+GitHub reported main as unprotected on 2026-11-10.
 Both target jobs must provide real evidence at the candidate revision.
 PR creation alone does not prove CI or review acceptance.
 
@@ -218,4 +220,8 @@ Fileglint's own source. Preserve upstream dependency licenses. The
 publication target is public [chomg/fileglint](https://github.com/chomg/fileglint).
 Only main is to be pushed. Private Codex recovery refs, old rewrite
 objects, ignored caches and local reports are not publication inputs.
-No binary release, notarization, store submission, PR or merge is implied.
+That initial authorization implied no binary release, notarization, store
+submission, PR or merge. On 2026-11-10 the user separately authorized committing
+the packaging/documentation changes, publishing them to main, and creating the
+0.1.0 GitHub Release with a verified personal-use ZIP and checksum. This does not
+authorize Developer ID signing, notarization or store submission.

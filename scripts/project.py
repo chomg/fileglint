@@ -65,10 +65,10 @@ def require_xcode():
     print(result.stdout, flush=True)
 
 
-def xcode(*args, derived_data='artifacts/DerivedData'):
+def xcode(*args, derived_data='artifacts/DerivedData', configuration='Debug'):
     require_xcode()
     run('xcodebuild', '-project', 'Fileglint.xcodeproj', '-scheme', 'Fileglint',
-        '-configuration', 'Debug', '-derivedDataPath', str(ROOT / derived_data),
+        '-configuration', configuration, '-derivedDataPath', str(ROOT / derived_data),
         '-clonedSourcePackagesDirPath', str(ROOT / '.build/xcode-packages'),
         '-onlyUsePackageVersionsFromResolvedFile', *args)
 
@@ -93,7 +93,7 @@ def check():
     run(sys.executable, 'scripts/generate_project.py', '--check')
     paths = sorted(Path('Configuration').glob('*'))
     run('plutil', '-lint', 'Fileglint.xcodeproj/project.pbxproj', *map(str, paths))
-    for path in [Path('scripts/project.py'), Path('scripts/generate_project.py'), Path('scripts/test_launcher.py')]:
+    for path in [Path('scripts/project.py'), Path('scripts/generate_project.py'), Path('scripts/test_launcher.py'), Path('scripts/package_personal.py')]:
         compile(path.read_text(), str(path), 'exec')
     files = sorted(Path('Sources').rglob('*.swift')) + sorted(Path('Tests').rglob('*.swift')) + sorted(Path('UITests').rglob('*.swift'))
     for path in files:

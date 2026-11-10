@@ -46,6 +46,10 @@
       "scripts/project.py",
       "dev-sample"
     ],
+    "package-personal": [
+      "python3",
+      "scripts/package_personal.py"
+    ],
     "build-development": [
       "python3",
       "scripts/project.py",

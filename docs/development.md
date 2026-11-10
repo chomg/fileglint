@@ -6,7 +6,7 @@ Workflow: [direct](engineering/workflow.md). Platform guide: [macOS](engineering
 
 Native Swift/AppKit + QuickLookUI; macOS 14+, arm64 and x86_64, Debug/Release. Root Swift tools manifest 6.0, Swift 5 language mode. Yams 6.2.2 and TOMLKit 0.6.0 are exact-pinned; both root and Xcode workspace Package.resolved are checked in. Python 3.10+ and uv are needed for the harness. CI pins uv 0.12.19, Python 3.12 and Xcode 26.0.1 (Swift 6.2 / macOS SDK 26.0); tool versions are logged by doctor. An explicit DEVELOPER_DIR overrides the toolchain per process, for example `DEVELOPER_DIR=/Applications/Xcode_26.0.1.app/Contents/Developer`. When the system selection is still CLT and /Applications/Xcode.app exists, the project adapter selects that full Xcode for its child processes. It preserves a different selected Xcode and never changes the global selection.
 
-Observed bootstrap host: macOS 27.0.1 arm64, Swift 6.4 (swiftlang-6.4.0.34.1), macOS SDK 27.0, uv 0.12.19, CLT only. At initial bootstrap full Xcode and XCTest were absent; Swift Testing was available for the shared suite. The authorized follow-up installed App Store Xcode 27.1 (27A9275) at /Applications/Xcode.app; use DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer for local native validation. The user completed first launch manually. Native schemes/destinations, universal builds and Finder behavior are now verified locally; see task 0001 for actual evidence and the remaining automated UI-test limitation. A directory without `.git` supports interactive verification but cannot run committed preflight or remote CI.
+Observed bootstrap host: macOS 27.0.1 arm64, Swift 6.4 (swiftlang-6.4.0.34.1), macOS SDK 27.0, uv 0.12.19, CLT only. At initial bootstrap full Xcode and XCTest were absent; Swift Testing was available for the shared suite. The authorized follow-up installed App Store Xcode 27.1 (27A9275) at /Applications/Xcode.app; use DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer for local native validation. The user completed first launch manually. The release host was rechecked on 2026-11-10 and now has Xcode 27.2 (27B52), with macOS 27.0.1 arm64. Native schemes/destinations, universal builds and Finder behavior were subsequently verified locally. Hosted arm64 and Intel host UI suites also passed; see task 0001 for dated evidence. The earlier local UI-automation initialization failure remains historical and does not describe the hosted results. A directory without `.git` supports interactive verification but cannot run committed preflight or remote CI.
 
 ```sh
 uv run --script scripts/dev.py doctor
@@ -113,7 +113,7 @@ The requested full rebuild after relocation passed on 2026-10-22. The old `.buil
 
 New native builds use `Fileglint.app` and the `Fileglint Preview` extension identity. If macOS still routes previews to Structured Preview from earlier development artifacts, disable that old provider in Quick Look extensions and enable Fileglint Preview after launching the new host. Do not change unrelated providers or default file associations.
 
-All mappings invoke `python3 scripts/project.py <name>` from the project root; see development.json schema 2. No shell expansion in the harness mappings.
+Most mappings invoke `python3 scripts/project.py <name>` from the project root; `package-personal` invokes `scripts/package_personal.py`; see development.json schema 2. No shell expansion in the harness mappings.
 
 | Command | Real operation | Environment / evidence |
 | --- | --- | --- |
@@ -126,6 +126,7 @@ All mappings invoke `python3 scripts/project.py <name>` from the project root; s
 | build | xcodebuild build, generic macOS, both architectures; lipo assertions on host, embedded appex and nested XPC launcher | Full Xcode; unsigned verification artifacts |
 | test-ui | xcodebuild test, native platform=macOS, HostUITests | Full Xcode/XCTest, interactive desktop and UI automation authorization; artifacts/UITestDerivedData and unique xcresult |
 | build-development | xcodebuild build, native current Mac, ad hoc signed | artifacts/DevelopmentDerivedData; declared sandbox entitlements, isolated from test injection |
+| package-personal | Release universal ad-hoc build, ZIP creation and verified extraction round trip | artifacts/PersonalDerivedData and a fresh artifacts/personal-archives directory; no installation or publication |
 | dev-sample | swift build --product PreviewHost and diagnostic bundle assembly | CLT fallback at artifacts/FileglintSample.app; no embedded extension or Finder registration |
 
 No command is null/inapplicable. Missing Xcode/permissions fail the appropriate command. Shared commands explicitly use SwiftPM's native build engine for compatibility with both selected toolchains. On this CLT host the test adapter also supplies the bundled Testing framework and macro plug-in paths because SwiftPM does not discover the CLT layout correctly. Missing framework/toolchain components still fail; no test is skipped. Swift/Clang/uv caches are project-local under .build where possible. SwiftPM may use its normal host metadata cache; no credentials are logged.
@@ -158,7 +159,7 @@ Manual results belong in task 0001; they cannot be inferred from XCTest, `qlmana
 
 ## CI, evidence and preflight
 
-.github/workflows/verify.yml defines the hosted jobs. CI runs on pull requests, pushes to `main` and manual dispatch. A feature-branch push with an open PR triggers only the pull request run; branches without a PR use local verification or manual dispatch. Pushes to `main` verify the merged revision. The user authorized public GitHub source publication; the first hosted run is triggered by the initial main push. Its actual result must be checked separately from local evidence. Required branch checks after repository publication: `macos-arm64` and `macos-x86_64`. Configure them in repository settings; a workflow file does not enable protection. Both must pass at the candidate revision. CI uploads harness reports and xcresult bundles for 14 days; app bundles are verification artifacts, not releases.
+.github/workflows/verify.yml defines the hosted jobs. CI runs on pull requests, pushes to `main` and manual dispatch. A feature-branch push with an open PR triggers only the pull request run; branches without a PR use local verification or manual dispatch. Pushes to `main` verify the merged revision. Required hosted jobs are `macos-arm64` and `macos-x86_64`; both must pass at the candidate revision. The merged feature revision passed both, including native host UI tests, in [run 40278460966](https://github.com/chomg/fileglint/actions/runs/40278460966). This is historical evidence, not validation of later changes. On 2026-11-10 the GitHub main-branch API reported `protected: false`; this task does not change protection settings. A workflow file does not enforce branch protection. CI uploads harness reports and xcresult bundles for 14 days; app bundles are verification artifacts, not releases.
 
 Evidence: `<absolute-git-dir>/ai-dev-harness/runs/<run-id>` or ignored artifacts/harness/runs without Git. Each contains run.json and numbered logs. Logs from early interactive compiler iterations may be available only in the chat; the final aggregate records the submitted working tree checks. The user authorized local Git initialization on main and separate skeleton, requirements/design and implementation commits on 2026-10-22. Earlier non-Git reports remain under artifacts/harness; new aggregate reports use .git/ai-dev-harness. Initial history and clean committed verification are recorded in [task 0001](tasks/0001-bootstrap.md#local-git-initialization-and-three-commit-history--2026-10-22). The publication target is [chomg/fileglint](https://github.com/chomg/fileglint), with main as the selected branch. The user authorized repository creation and the initial main-only push; final remote state and first CI results are retained in the publication evidence.
 
@@ -172,11 +173,35 @@ On failure retain code and logs; inspect run.json and its failed step before exp
 
 ## Distribution and provenance
 
-Native `build` is unsigned verification. `dev`/test-ui use ad hoc local signing, no Developer ID credentials. Production packaging, installation outside the workspace, distribution signing, notarization, uploads and store submission remain separately authorized work. No distribution channel is committed yet.
+Native `build` is unsigned verification. `dev`/test-ui use ad hoc local signing, no Developer ID credentials. On 2026-11-10 the user authorized committing packaging/documentation changes and publishing a personal-use 0.1.0 GitHub Release with its ZIP and checksum after verification. Developer ID signing, notarization, store submission and installation outside the workspace remain outside this task.
 
-Started from AI Dev Harness 0.2.1, direct workflow. Unused scaffold metadata, the optional path checker and blank document templates were removed on 2026-10-22; the configured runner, command adapter, project generator and engineering contracts remain. Bootstrap remains partial while automated UI, hosted matrix and remaining OS/architecture acceptance evidence is missing. Native universal builds and the current arm64 Finder flows have passed locally. See [task 0001](tasks/0001-bootstrap.md) for actual results.
+The user selected a local personal ZIP archive on 2026-10-26. Run
+`uv run --script scripts/dev.py package-personal` to build an ad-hoc-signed
+Universal Release archive with embedded installation instructions, provenance,
+license notices and an external SHA-256 checksum. App/extension/launcher versions
+must match. The command verifies the actual extracted bundle before naming the
+final ZIP; failed artifacts remain available for diagnosis. Existing build/dev
+commands retain their Debug configuration and separate output directories.
+See [personal installation](personal-installation.md) for Gatekeeper's per-app
+Open Anyway flow and signature/integrity troubleshooting. This personal archive
+does not constitute Developer ID signing or notarization. The packaging command itself never publishes; release publication is a separate authorized operation.
 
-## Current local verification and automation authorization
+For an authorized GitHub release, commit the intended sources first, verify the
+clean candidate locally and on both hosted targets, then run `package-personal`
+from that same clean commit. Confirm `BUILD-INFO.json` records the candidate SHA
+and `worktree_dirty: false`, and check `shasum -a 256 -c SHA256SUMS`. Create a
+version tag at that exact commit and a draft GitHub Release. Attach the verified
+ZIP and checksum, download them back and verify the checksum before publishing.
+Record candidate checks and known installation/platform limits in the release
+notes. Do not reuse the earlier dirty-checkout archive as a clean release build.
+
+Started from AI Dev Harness 0.2.1, direct workflow. Unused scaffold metadata, the optional path checker and blank document templates were removed on 2026-10-22; the configured runner, command adapter, project generator and engineering contracts remain. The agreed comment-preservation, application-selection and folding features are merged. Hosted verification and host UI suites passed on arm64 and Intel; minimum-OS and Intel Finder acceptance remain uncompleted. Native universal builds and the current arm64 Finder flows have passed locally. See [task 0001](tasks/0001-bootstrap.md) for actual results.
+
+## Historical local verification and automation authorization — 2026-10-21
+
+The following local failure is retained for diagnosis. Later hosted arm64/Intel
+UI tests passed; it is not a current global UI-test blocker. Recheck the local
+host before changing any developer policy, and do not change it for packaging.
 
 On 2026-10-21, Xcode 27.1 (27A9275), Swift 6.4 and SDK 27.0 passed the full local scope. Finder Quick Look on macOS 27.0.1 arm64 displayed our extension for JSON, TOML, YAML and .yml; Raw/Prettified restoration, Unicode/dates/YAML streams, invalid JSON, invalid UTF-8, oversize errors, text selection/copy and OS app-opening flows were exercised. Source fixture hashes were unchanged. This is not hosted CI, Intel runtime or minimum-OS evidence.
 
