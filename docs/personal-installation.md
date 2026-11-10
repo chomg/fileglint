@@ -71,6 +71,7 @@ For an exact committed source record, build from a clean committed checkout.
 
 The packaging command uses separate Release build output and a fresh archive
 directory each time. It copies with macOS `ditto`, extracts the resulting ZIP,
-and verifies signatures, both architectures, version consistency, file hashes,
+and verifies signatures, sandbox entitlements without debugger access, both
+architectures, version consistency, file hashes,
 executable permissions and accompanying documents. Incomplete ZIPs retain the
 name `unverified.zip`; only a successful check produces the final archive name.

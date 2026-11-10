@@ -34,11 +34,19 @@ def verify_app(app, version):
         binary = bundle / 'Contents/MacOS' / info['CFBundleExecutable']
         for architecture in ('arm64', 'x86_64'):
             run('lipo', str(binary), '-verify_arch', architecture)
+            signature = subprocess.check_output(
+                ['codesign', '--display', '--verbose=2', '--architecture', architecture, str(bundle)],
+                stderr=subprocess.STDOUT, text=True)
+            if 'Signature=adhoc' not in signature:
+                raise ValueError(f'Expected personal ad-hoc signature: {bundle.name} ({architecture})')
+            entitlements = plistlib.loads(subprocess.check_output(
+                ['codesign', '--display', '--architecture', architecture, '--entitlements', ':-', str(bundle)],
+                stderr=subprocess.PIPE))
+            if entitlements.get('com.apple.security.app-sandbox') is not True:
+                raise ValueError(f'Expected sandbox entitlement: {bundle.name} ({architecture})')
+            if entitlements.get('com.apple.security.get-task-allow'):
+                raise ValueError(f'Debugger entitlement in personal archive: {bundle.name} ({architecture})')
         run('codesign', '--verify', '--all-architectures', '--strict', str(bundle))
-        signature = subprocess.check_output(
-            ['codesign', '--display', '--verbose=2', str(bundle)], stderr=subprocess.STDOUT, text=True)
-        if 'Signature=adhoc' not in signature:
-            raise ValueError(f'Expected personal ad-hoc signature: {bundle.name}')
     run('codesign', '--verify', '--all-architectures', '--deep', '--strict', str(app))
 
 
@@ -66,6 +74,7 @@ def main():
     dirty = bool(subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=all'], text=True).strip())
     xcode('build', '-destination', 'generic/platform=macOS', 'ARCHS=arm64 x86_64',
           'ONLY_ACTIVE_ARCH=NO', 'CODE_SIGN_IDENTITY=-', 'CODE_SIGNING_ALLOWED=YES',
+          'CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO',
           configuration='Release', derived_data='artifacts/PersonalDerivedData')
     app = ROOT / 'artifacts/PersonalDerivedData/Build/Products/Release/Fileglint.app'
     verify_app(app, versions[0])

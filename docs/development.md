@@ -179,7 +179,9 @@ The user selected a local personal ZIP archive on 2026-10-26. Run
 `uv run --script scripts/dev.py package-personal` to build an ad-hoc-signed
 Universal Release archive with embedded installation instructions, provenance,
 license notices and an external SHA-256 checksum. App/extension/launcher versions
-must match. The command verifies the actual extracted bundle before naming the
+must match. Packaging disables Xcode’s injected debugger entitlement and checks
+that every bundle retains App Sandbox without debugger access on both
+architectures. The command verifies the actual extracted bundle before naming the
 final ZIP; failed artifacts remain available for diagnosis. Existing build/dev
 commands retain their Debug configuration and separate output directories.
 See [personal installation](personal-installation.md) for Gatekeeper's per-app

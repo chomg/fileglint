@@ -89,3 +89,22 @@ asset names/checksum and publication outcome belong in the
 This avoids changing the already verified/tagged source just to record its own
 commit identity. No packaging CI automation, DMG, paid signing or installation
 is included.
+
+### Pre-publication signing correction
+
+Candidate `29e11ed` passed clean local scope and both jobs in
+[run 42763882662](https://github.com/chomg/fileglint/actions/runs/42763882662).
+Its Release ZIP passed the original archive/signature checks, but an additional
+entitlement inspection found `com.apple.security.get-task-allow: true` in the
+host. Publication stopped before creating a tag or release. The failed check
+is retained in `artifacts/release-0.1.0/archive-checks.log` and the unpublished
+archive remains under `artifacts/personal-archives/20261110T055232Z-cd11eb7a/`.
+
+Xcode reported `CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES` for Release builds.
+The packaging command now disables that injection for its own build only, as
+[Apple documents](https://developer.apple.com/documentation/security/resolving-common-notarization-issues).
+The verifier now checks both architectures of every bundle for ad-hoc signing,
+an enabled App Sandbox and absence of debugger access, before and after ZIP
+extraction. Debug/development commands keep their existing settings. Run fresh
+local/hosted checks at the corrected candidate, then rebuild and publish only
+that candidate's archive; the previous candidate is not the release revision.
