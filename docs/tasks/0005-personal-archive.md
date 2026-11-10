@@ -108,3 +108,14 @@ an enabled App Sandbox and absence of debugger access, before and after ZIP
 extraction. Debug/development commands keep their existing settings. Run fresh
 local/hosted checks at the corrected candidate, then rebuild and publish only
 that candidate's archive; the previous candidate is not the release revision.
+
+
+## Published 0.1.0 and subsequent packaging scope
+
+The original Universal release was published at `9669a66` after clean local
+verification and [both hosted jobs](https://github.com/chomg/fileglint/actions/runs/42765187174)
+passed. ZIP and checksum were downloaded back and verified before publication.
+The follow-up user request selects separate arm64/Intel distribution packages,
+arm64 by default, while preserving the original Universal assets and tag.
+That scope and its evidence are authoritative in
+[task 0006](0006-architecture-archives.md).

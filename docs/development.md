@@ -126,7 +126,7 @@ Most mappings invoke `python3 scripts/project.py <name>` from the project root; 
 | build | xcodebuild build, generic macOS, both architectures; lipo assertions on host, embedded appex and nested XPC launcher | Full Xcode; unsigned verification artifacts |
 | test-ui | xcodebuild test, native platform=macOS, HostUITests | Full Xcode/XCTest, interactive desktop and UI automation authorization; artifacts/UITestDerivedData and unique xcresult |
 | build-development | xcodebuild build, native current Mac, ad hoc signed | artifacts/DevelopmentDerivedData; declared sandbox entitlements, isolated from test injection |
-| package-personal | Release universal ad-hoc build, ZIP creation and verified extraction round trip | artifacts/PersonalDerivedData and a fresh artifacts/personal-archives directory; no installation or publication |
+| package-personal | Release single-architecture ad-hoc build, ZIP creation and verified extraction round trip; defaults to arm64, accepts --arch x86_64 | architecture-specific PersonalDerivedData directories and fresh artifacts/personal-archives output; no installation or publication |
 | dev-sample | swift build --product PreviewHost and diagnostic bundle assembly | CLT fallback at artifacts/FileglintSample.app; no embedded extension or Finder registration |
 
 No command is null/inapplicable. Missing Xcode/permissions fail the appropriate command. Shared commands explicitly use SwiftPM's native build engine for compatibility with both selected toolchains. On this CLT host the test adapter also supplies the bundled Testing framework and macro plug-in paths because SwiftPM does not discover the CLT layout correctly. Missing framework/toolchain components still fail; no test is skipped. Swift/Clang/uv caches are project-local under .build where possible. SwiftPM may use its normal host metadata cache; no credentials are logged.
@@ -177,11 +177,16 @@ Native `build` is unsigned verification. `dev`/test-ui use ad hoc local signing,
 
 The user selected a local personal ZIP archive on 2026-10-26. Run
 `uv run --script scripts/dev.py package-personal` to build an ad-hoc-signed
-Universal Release archive with embedded installation instructions, provenance,
-license notices and an external SHA-256 checksum. App/extension/launcher versions
+arm64 Release archive by default, with embedded installation instructions,
+provenance, license notices and a matching `.zip.sha256` checksum. Use
+`--arch x86_64` for Intel. Future releases provide these two separate ZIPs, without
+new Universal distribution archives. The original 0.1.0 Universal ZIP and its
+checksum remain unchanged. Unsigned universal verification builds are separate
+from these distribution packages. App/extension/launcher versions
 must match. Packaging disables Xcode’s injected debugger entitlement and checks
-that every bundle retains App Sandbox without debugger access on both
-architectures. The command verifies the actual extracted bundle before naming the
+that every bundle retains App Sandbox without debugger access and contains
+exactly the selected architecture. Each architecture has separate derived data.
+The command verifies the actual extracted bundle before naming the
 final ZIP; failed artifacts remain available for diagnosis. Existing build/dev
 commands retain their Debug configuration and separate output directories.
 See [personal installation](personal-installation.md) for Gatekeeper's per-app
@@ -190,12 +195,24 @@ does not constitute Developer ID signing or notarization. The packaging command 
 
 For an authorized GitHub release, commit the intended sources first, verify the
 clean candidate locally and on both hosted targets, then run `package-personal`
-from that same clean commit. Confirm `BUILD-INFO.json` records the candidate SHA
-and `worktree_dirty: false`, and check `shasum -a 256 -c SHA256SUMS`. Create a
+and `package-personal --arch x86_64` from that same clean commit. Confirm
+`BUILD-INFO.json` records the candidate SHA
+and `worktree_dirty: false`, and check each matching `.zip.sha256` with
+`shasum -a 256 -c <checksum-file>`. Create a
 version tag at that exact commit and a draft GitHub Release. Attach the verified
-ZIP and checksum, download them back and verify the checksum before publishing.
+ZIPs and their checksums, download them back and verify before publishing.
 Record candidate checks and known installation/platform limits in the release
 notes. Do not reuse the earlier dirty-checkout archive as a clean release build.
+
+To add architecture packages to an existing release, pass `--release-tag v0.1.0`
+(with the actual matching app version) to both packaging commands. This requires
+a clean checkout and rejects differences in product sources, configuration,
+project/package definitions, build adapters or license versus the existing tag.
+BUILD-INFO records both the unchanged tagged product commit and the current
+packaging commit. Preserve existing assets, checksums and tag; upload the new
+architecture ZIPs and their distinct checksum files, download and verify them,
+and append candidate-specific evidence to the release notes. See
+[the architecture-packaging task](tasks/0006-architecture-archives.md).
 
 Started from AI Dev Harness 0.2.1, direct workflow. Unused scaffold metadata, the optional path checker and blank document templates were removed on 2026-10-22; the configured runner, command adapter, project generator and engineering contracts remain. The agreed comment-preservation, application-selection and folding features are merged. Hosted verification and host UI suites passed on arm64 and Intel; minimum-OS and Intel Finder acceptance remain uncompleted. Native universal builds and the current arm64 Finder flows have passed locally. See [task 0001](tasks/0001-bootstrap.md) for actual results.
 

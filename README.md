@@ -12,7 +12,12 @@ In **Prettified**, use the disclosure arrows in the left gutter to fold JSON obj
 
 ## Personal archive and installation
 
-Download the ZIP and `SHA256SUMS` from [GitHub Releases](https://github.com/chomg/fileglint/releases). The ZIP is the installable app; GitHub’s automatic source-code archives are not app bundles.
+Download the ZIP for your Mac and its matching `.zip.sha256` file from
+[GitHub Releases](https://github.com/chomg/fileglint/releases): **arm64 for Apple
+Silicon**, **x86_64 for Intel**. The ZIP is the installable app; GitHub's automatic
+source-code archives are not app bundles. The original 0.1.0 Universal ZIP and
+its `SHA256SUMS` remain available as historical assets; new packages are separate
+architecture builds.
 
 To build a locally signed Release ZIP yourself, install full Xcode and run:
 
@@ -20,8 +25,13 @@ To build a locally signed Release ZIP yourself, install full Xcode and run:
 uv run --script scripts/dev.py package-personal
 ```
 
+This defaults to arm64. Build the Intel package with
+`uv run --script scripts/dev.py package-personal --arch x86_64`. For each future
+release, produce both packages; no new Universal package is planned.
+
 The command creates a new directory under `artifacts/personal-archives/` with a
-Universal ZIP, `SHA256SUMS` and `BUILD-INFO.json`. The ZIP contains Fileglint.app,
+single-architecture ZIP, its matching `.zip.sha256` and `BUILD-INFO.json`. The ZIP
+contains Fileglint.app,
 installation instructions and license notices. It verifies all three binaries
 and their ad-hoc signatures again after extracting the ZIP. It does not install
 the app or publish a GitHub release, and needs no paid Apple developer account.
